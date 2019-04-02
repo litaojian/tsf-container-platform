@@ -115,10 +115,6 @@ public class ClustersController extends BaseController{
 
 
 
-
-
-
-
 	@PostMapping("/{clusterId}:setupMaster")
 	@ApiOperation(value = "设置master节点", httpMethod = "POST",
 			notes = "设置master节点<br>" +

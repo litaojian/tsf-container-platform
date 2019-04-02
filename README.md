@@ -4,7 +4,7 @@
 TSF 对接容器平台规范接口
 
 ### tsf-container-api
-定义容器平台接口
+对应容器平台需要实现的API接口
 
 ### tsf-adapter-rancher
-rancher实现tsf-container-api接口
+rancher对api接口对实现
