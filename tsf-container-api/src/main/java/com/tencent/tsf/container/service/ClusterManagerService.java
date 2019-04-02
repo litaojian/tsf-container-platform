@@ -25,4 +25,8 @@ public interface ClusterManagerService {
 
 	String deleteClusterById(Map<String, String> headers, String clusterId);
 
+	Map getNamespaceById(Map<String, String> headers, String clusterId, String namespaceId);
+
+	Map getNamespaces(Map<String, String> headers, Map<String, Object> params, String clusterId);
+
 }

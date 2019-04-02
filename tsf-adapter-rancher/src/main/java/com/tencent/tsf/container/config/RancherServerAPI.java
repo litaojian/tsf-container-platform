@@ -23,5 +23,9 @@ public class RancherServerAPI {
 	public static String RANCHER_GET_ALL_CLUSTERS       = "/clusters";
 	/** 删除集群 **/
 	public static String RANCHER_DELETE_CLUSTER         = "/clusters/%1$s";
+	/** 获取单个命名空间 **/
+	public static String RANCHER_GET_NAMESPACE_INFO     = "/cluster/%1$s/namespaces/%2$s";
+	/** 获取某个集群下的所有命名空间 **/
+	public static String RANCHER_GET_ALL_NAMESPACES     = "/cluster/%1$s/namespaces";
 
 }
