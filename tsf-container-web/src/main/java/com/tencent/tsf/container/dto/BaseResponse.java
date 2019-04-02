@@ -20,9 +20,6 @@ public class BaseResponse {
 	private Integer code;
 	private String message;
 	private Object data;
-	private Integer totalCount;
-	private Integer offset;
-	private Integer limit;
 
 	public BaseResponse(){
 		this.code = 0;

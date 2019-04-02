@@ -52,7 +52,7 @@ public class BaseController {
 	protected BaseResponse createSuccessResult(Object data){
 		BaseResponse result = new BaseResponse();
 		result.setCode(0);
-		result.setMessage("" + new Date());
+		result.setMessage("");
 		result.setData(data);
 		return result;
 	}

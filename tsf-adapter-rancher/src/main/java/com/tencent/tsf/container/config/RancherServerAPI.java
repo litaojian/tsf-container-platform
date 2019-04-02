@@ -15,9 +15,13 @@ package com.tencent.tsf.container.config;
 
 public class RancherServerAPI {
 
+	/** 创建集群 **/
 	public static String RANCHER_CREATE_CLUSTER         = "/cluster";
+	/** 获取单个集群信息 **/
 	public static String RANCHER_GET_THE_CLUSTER_INFO   = "/clusters?id_eq=%1$s";
+	/** 获取集群列表 **/
 	public static String RANCHER_GET_ALL_CLUSTERS       = "/clusters";
+	/** 删除集群 **/
 	public static String RANCHER_DELETE_CLUSTER         = "/clusters/%1$s";
 
 }

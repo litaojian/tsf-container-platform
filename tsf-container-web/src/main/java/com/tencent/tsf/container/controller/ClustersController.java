@@ -65,7 +65,6 @@ public class ClustersController extends BaseController{
 					"返回参数描述：<br/>", response = BaseResponse.class)
 	public BaseResponse getCluster(HttpServletRequest request, @PathVariable("clusterId") String clusterId) {
 
-
 		Map<String, String> headers = getCustomHeaders(request);
 		String result = clusterManagerService.getClusterById(headers, clusterId);
 
@@ -116,6 +115,10 @@ public class ClustersController extends BaseController{
 
 
 
+
+
+
+
 	@PostMapping("/{clusterId}:setupMaster")
 	@ApiOperation(value = "设置master节点", httpMethod = "POST",
 			notes = "设置master节点<br>" +
@@ -124,13 +127,6 @@ public class ClustersController extends BaseController{
 				"<li>clusterId：集群ID</li>" +
 			"</ul>"
 			+ "返回参数描述<p></p>", response = BaseResponse.class)
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Success", response = BaseResponse.class),
-			@ApiResponse(code = 400, message = "Bad Request"),
-			@ApiResponse(code = 401, message = "Unauthorized"),
-			@ApiResponse(code = 403, message = "Forbidden"),
-			@ApiResponse(code = 404, message = "Not Found"),
-			@ApiResponse(code = 500, message = "Failure")})
 	public String setupMaster(@PathVariable("clusterId") String clusterId) {
 		log.info("===============clusterId: {}", clusterId);
 		return clusterId;
