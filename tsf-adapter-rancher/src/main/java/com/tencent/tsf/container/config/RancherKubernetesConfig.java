@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -48,17 +49,23 @@ public class RancherKubernetesConfig {
 	@Data
 	public class Etcd {
 		private String creation = "12h";
-		private ExtraArgs extraArgs  = new ExtraArgs();
+		private Map<String, String> extraArgs;
 		private String retention = "72h";
 		private Boolean snapshot = true;
 		private String type = "etcdService";
+
+		{
+			extraArgs = new HashMap<>();
+			extraArgs.put("heartbeat-interval", "500");
+			extraArgs.put("election-timeout", "5000");
+		}
 	}
 
-	@Data
-	public class ExtraArgs {
-		private Integer heartbeatInterval = 500;
-		private  Integer electionTimeout = 5000;
-	}
+//	@Data
+//	public class ExtraArgs {
+//		private Integer heartbeatInterval = 500;
+//		private Integer electionTimeout = 5000;
+//	}
 
 	@Data
 	public class KubeApi{
@@ -70,7 +77,7 @@ public class RancherKubernetesConfig {
 	public class Services{
 		private String type ="monitoringConfig";
 		private KubeApi kubeApi = new KubeApi();
-		private RancherKubernetesConfig.Etcd etcd = new RancherKubernetesConfig.Etcd();
+		private Etcd etcd = new Etcd();
 
 	}
 

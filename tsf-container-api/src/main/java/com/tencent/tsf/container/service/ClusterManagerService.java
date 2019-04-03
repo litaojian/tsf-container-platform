@@ -25,4 +25,5 @@ public interface ClusterManagerService {
 
 	String deleteClusterById(Map<String, String> headers, String clusterId);
 
+	String clusterUsage(Map<String, String> headers, String clusterId);
 }

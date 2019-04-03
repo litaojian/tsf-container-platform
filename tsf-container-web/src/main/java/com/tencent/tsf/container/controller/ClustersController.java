@@ -110,7 +110,34 @@ public class ClustersController extends BaseController{
 		return createSuccessResult(data);
 	}
 
+	@GetMapping("/{clusterId}/usage")
+	@ApiOperation(value = "集群资源对使用情况", httpMethod = "GET",
+			notes = "集群资源对使用情况<br/>" +
+					"请求参数描述：" +
+					"<ul>" +
+					"<li>clusterId：集群ID（String），必填</li>" +
+					"</ul>" +
+					"返回参数描述：<br/>", response = BaseResponse.class)
+	public BaseResponse clusterUsage(HttpServletRequest request,
+	                                 @PathVariable("clusterId") String clusterId){
+		Map<String, String> headers = getCustomHeaders(request);
+		String data = clusterManagerService.clusterUsage(headers, clusterId);
+		return createSuccessResult(data);
+	}
 
+	@GetMapping("/{clusterId}/deploymentScript")
+	@ApiOperation(value = "获取将机器加入/移出集群的脚本", httpMethod = "GET",
+			notes = "获取将机器加入/移出集群的脚本<br>" +
+					"请求参数描述：" +
+					"<ul>" +
+					"<li>clusterId：集群ID</li>" +
+					"</ul>" +
+					"返回参数描述<p></p>", response = BaseResponse.class)
+	public BaseResponse deployScript(HttpServletRequest request,
+	                                 @PathVariable("clusterId") String clusterId) {
+
+		return null;
+	}
 
 
 
@@ -121,8 +148,8 @@ public class ClustersController extends BaseController{
 			"请求参数描述：" +
 			"<ul>" +
 				"<li>clusterId：集群ID</li>" +
-			"</ul>"
-			+ "返回参数描述<p></p>", response = BaseResponse.class)
+			"</ul>" +
+			"返回参数描述<p></p>", response = BaseResponse.class)
 	public String setupMaster(@PathVariable("clusterId") String clusterId) {
 		log.info("===============clusterId: {}", clusterId);
 		return clusterId;

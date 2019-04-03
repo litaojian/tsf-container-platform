@@ -29,7 +29,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.tencent.tsf</groupId>
-			<artifactId>tsf-container-platorm-adapter-rancher</artifactId>
+			<artifactId>tsf-adapter-rancher</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 

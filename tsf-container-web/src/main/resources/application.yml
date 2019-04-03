@@ -43,3 +43,6 @@ rancher:
       etcd:
         retention: 73h
         snapshot: true
+        extraArgs:
+          heartbeat-interval: 501
+          election-timeout: 5001

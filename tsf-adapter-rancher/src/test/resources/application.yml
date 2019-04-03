@@ -1,0 +1,16 @@
+## rancher setting
+container:
+  platform:
+    rancher:
+      #Rancher API请求地址
+      #      endpoint: https://172.16.84.149/v3
+      endpoint: https://43.254.44.13/v3
+      #username
+      #local
+      #      access-key: token-b57rs
+      access-key: token-pljwf
+      #password
+      #      access-token: rmpm7hrpgw8twcpm74v6gz9zcvkznpfwvrgz5q4m2ksm76g594wt82
+      access-token: rk4s4h4mq28dvcdcjt5k788wwb25xwtvvzwk8vwktzl567h99n5wf9
+#Authorization:  Basic dG9rZW4tYjU3cnM6cm1wbTdocnBndzh0d2NwbTc0djZnejl6Y3Zrem5wZnd2cmd6NXE0bTJrc203Nmc1OTR3dDgy
+#Authorization:  Basic dG9rZW4tcGxqd2Y6cms0czRoNG1xMjhkdmNkY2p0NWs3ODh3d2IyNXh3dHZ2endrOHZ3a3R6bDU2N2g5OW41d2Y5
