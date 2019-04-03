@@ -6,11 +6,11 @@
 package com.tencent.tsf.container.config;
 
 /**
- * @Title RancherServerAPI
- * @Author Ethan
- * @Date 2019/3/29 18:23
- * @Description TODO
- * @Version Version 1.0
+ * @title RancherServerAPI
+ * @title Ethan
+ * @date 2019/3/29 18:23
+ * @description TODO
+ * @@version Version 1.0
  */
 
 public class RancherServerAPI {

@@ -7,16 +7,18 @@ package com.tencent.tsf.container;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
- * @Title RancherApplication
- * @Author Ethan Pau
- * @Date 2019/4/2 10:57
- * @Description TODO
- * @Version Version 1.0
+ * @title RancherApplication
+ * @title Ethan Pau
+ * @date 2019/4/2 10:57
+ * @description TODO
+ * @@version Version 1.0
  */
 
 @SpringBootApplication
+@EnableConfigurationProperties
 public class RancherApplication {
 	public static void main (String[] args) {
 		SpringApplication.run(RancherApplication.class, args);

@@ -21,11 +21,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**
- * @Title HttpClientUtil
- * @Author Ethan
- * @Date 2019/3/29 11:41
- * @Description TODO
- * @Version Version 1.0
+ * @title HttpClientUtil
+ * @title Ethan
+ * @date 2019/3/29 11:41
+ * @description TODO
+ * @@version Version 1.0
  */
 @Slf4j
 public class HttpClientUtil {

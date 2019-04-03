@@ -26,11 +26,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @Title SwaggerConfiguration
- * @Author Ethan
- * @Date 2019/3/29 08:41
- * @Description swagger 配置信息
- * @Version Version 1.0
+ * @title SwaggerConfiguration
+ * @title Ethan
+ * @date 2019/3/29 08:41
+ * @description swagger 配置信息
+ * @@version Version 1.0
  */
 @Data
 @Configuration

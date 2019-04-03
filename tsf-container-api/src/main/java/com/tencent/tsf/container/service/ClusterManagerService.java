@@ -8,11 +8,11 @@ package com.tencent.tsf.container.service;
 import java.util.Map;
 
 /**
- * @Title ClusterManagerService
- * @Author Ethan
- * @Date 2019/3/29 13:19
- * @Description TODO
- * @Version Version 1.0
+ * @title ClusterManagerService
+ * @title Ethan
+ * @date 2019/3/29 13:19
+ * @description TODO
+ * @@version Version 1.0
  */
 
 public interface ClusterManagerService {

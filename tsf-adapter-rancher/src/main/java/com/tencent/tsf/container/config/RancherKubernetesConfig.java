@@ -16,11 +16,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @Title RancherKubernetesConfig
- * @Author Ethan Pau
- * @Date 2019/4/1 16:36
- * @Description TODO
- * @Version Version 1.0
+ * @title RancherKubernetesConfig
+ * @title Ethan Pau
+ * @date 2019/4/1 16:36
+ * @description TODO
+ * @@version Version 1.0
  */
 
 @Data

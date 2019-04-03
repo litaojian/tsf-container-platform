@@ -15,11 +15,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
- * @Title BaseController
- * @Author Ethan
- * @Date 2019/3/29 10:35
- * @Description TODO
- * @Version Version 1.0
+ * @title BaseController
+ * @title Ethan
+ * @date 2019/3/29 10:35
+ * @description TODO
+ * @@version Version 1.0
  */
 
 @Slf4j

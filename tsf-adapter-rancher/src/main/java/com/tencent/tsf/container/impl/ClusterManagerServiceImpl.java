@@ -6,19 +6,23 @@
 package com.tencent.tsf.container.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.config.RancherKubernetesConfig;
 import com.tencent.tsf.container.config.RancherServerPath;
 import com.tencent.tsf.container.dto.NamespaceDTO;
+import com.tencent.tsf.container.models.Capacity;
+import com.tencent.tsf.container.models.ClusterInfo;
+import com.tencent.tsf.container.models.Limits;
+import com.tencent.tsf.container.models.Requested;
 import com.tencent.tsf.container.service.ClusterManagerService;
 import com.tencent.tsf.container.utils.HttpClientUtil;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,11 +31,11 @@ import java.util.Map;
 
 
 /**
- * @Title ClusterManagerServiceImpl
- * @Author Ethan
- * @Date 2019/3/29 13:20
- * @Description TODO
- * @Version Version 1.0
+ * @title ClusterManagerServiceImpl
+ * @title Ethan
+ * @date 2019/3/29 13:20
+ * @description TODO
+ * @@version Version 1.0
  */
 
 @Slf4j
@@ -52,13 +56,15 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		param.put("dockerRootDir", "/var/lib/docker");
 		param.put("enableNetworkPolicy", false);
 		param.put("type", "cluster");
-		param.put("rancherKubernetesEngineConfig", rancherKubernetesConfig);
+		RancherKubernetesConfig config = new RancherKubernetesConfig();
+		BeanUtils.copyProperties(rancherKubernetesConfig, config);
+		param.put("rancherKubernetesEngineConfig", config);
 
-		System.out.println(JSONObject.fromObject(param).toString());
+		System.out.println(JSON.toJSONString(param));
 
 		headers.put("Content-Type", "application/json");
 		String url = rancherServerPath.createClusterUrl();
-		String result = HttpClientUtil.doPost(url, headers, JSONObject.fromObject(param).toString());
+		String result = HttpClientUtil.doPost(url, headers, JSON.toJSONString(param));
 		return result;
 	}
 
@@ -100,27 +106,29 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	}
 
 	private String conversionToClusterUsage(String result) {
-		JSONObject obj = JSONObject.fromObject(result);
+		JSONObject obj = JSON.parseObject(result);
 		JSONArray arr = (JSONArray) obj.get("data");
-		JSONObject clusterInfo = JSONObject.fromObject(arr.get(0).toString());
-		if(clusterInfo == null || clusterInfo.size() == 0) {
+		if(arr == null || arr.size() == 0)
+			return StringUtils.EMPTY;
+		ClusterInfo clusterInfo = JSON.parseObject(arr.get(0).toString(), ClusterInfo.class);
+		if(clusterInfo == null) {
 			return StringUtils.EMPTY;
 		}
 		JSONObject usage = new JSONObject();
-		JSONObject capacity = (JSONObject) clusterInfo.get("capacity");
-		JSONObject requested = (JSONObject) clusterInfo.get("requested");
-		JSONObject limits = (JSONObject) clusterInfo.get("limits");
-		if(!CollectionUtils.isEmpty(capacity)) {
-			usage.put("cpuTotal", capacity.get("cpu"));
-			usage.put("memTotal", capacity.get("memory"));
+		Capacity capacity = clusterInfo.getCapacity();
+		Requested requested = clusterInfo.getRequested();
+		Limits limits = clusterInfo.getLimits();
+		if(capacity != null) {
+			usage.put("cpuTotal", capacity.getCpu());
+			usage.put("memTotal", capacity.getMemory());
 		}
-		if(!CollectionUtils.isEmpty(requested)) {
-			usage.put("cpuRequest", requested.get("cpu"));
-			usage.put("memRequest", capacity.get("memory"));
+		if(requested != null) {
+			usage.put("cpuRequest", requested.getCpu());
+			usage.put("memRequest", capacity.getMemory());
 		}
-		if(!CollectionUtils.isEmpty(limits)) {
-			usage.put("cpuLimit", limits.get("cpu"));
-			usage.put("memLimit", capacity.get("memory"));
+		if(limits != null) {
+			usage.put("cpuLimit", limits.getCpu());
+			usage.put("memLimit", capacity.getMemory());
 		}
 		return usage.toString();
 	}

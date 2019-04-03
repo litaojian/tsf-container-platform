@@ -10,11 +10,11 @@ import lombok.Data;
 import java.util.Map;
 
 /**
- * @Title ClusterInfo
- * @Author Ethan Pau
- * @Date 2019/4/2 10:21
- * @Description TODO
- * @Version Version 1.0
+ * @title ClusterInfo
+ * @title Ethan Pau
+ * @date 2019/4/2 10:21
+ * @description TODO
+ * @@version Version 1.0
  */
 @Data
 public class ClusterInfo {

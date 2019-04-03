@@ -8,11 +8,11 @@ package com.tencent.tsf.container.models;
 import lombok.Data;
 
 /**
- * @Title Allocatable
- * @Author Ethan Pau
- * @Date 2019/4/2 10:30
- * @Description TODO
- * @Version Version 1.0
+ * @title Allocatable
+ * @title Ethan Pau
+ * @date 2019/4/2 10:30
+ * @description TODO
+ * @@version Version 1.0
  */
 
 @Data

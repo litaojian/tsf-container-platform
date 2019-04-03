@@ -11,11 +11,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @Title RancherConfiguration
- * @Author Ethan
- * @Date 2019/3/29 11:04
- * @Description TODO
- * @Version Version 1.0
+ * @title RancherConfiguration
+ * @title Ethan
+ * @date 2019/3/29 11:04
+ * @description TODO
+ * @@version Version 1.0
  */
 
 @Data

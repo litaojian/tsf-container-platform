@@ -7,15 +7,17 @@ package com.tencent.tsf.container;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
- * @Title ContainerServerApiApplication
- * @Author Ethan Pau
- * @Date 2019/4/1 18:04
- * @Description TODO
- * @Version Version 1.0
+ * @title ContainerServerApiApplication
+ * @title Ethan Pau
+ * @date 2019/4/1 18:04
+ * @description TODO
+ * @@version Version 1.0
  */
 @SpringBootApplication
+@EnableConfigurationProperties
 public class ContainerServerApiApplication {
 
 	public static void main (String[] args) {

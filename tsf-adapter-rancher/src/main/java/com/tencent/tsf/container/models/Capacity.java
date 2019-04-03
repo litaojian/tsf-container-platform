@@ -8,11 +8,11 @@ package com.tencent.tsf.container.models;
 import lombok.Data;
 
 /**
- * @Title Capacity
- * @Author Ethan Pau
- * @Date 2019/4/2 10:31
- * @Description TODO
- * @Version Version 1.0
+ * @title Capacity
+ * @title Ethan Pau
+ * @date 2019/4/2 10:31
+ * @description TODO
+ * @@version Version 1.0
  */
 @Data
 public class Capacity extends BaseDeviceCase {

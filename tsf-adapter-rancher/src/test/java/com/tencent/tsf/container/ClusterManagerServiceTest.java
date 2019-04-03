@@ -20,11 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @Title ClusterManagerServiceTest
- * @Author Ethan Pau
- * @Date 2019/4/2 10:43
- * @Description TODO
- * @Version Version 1.0
+ * @title ClusterManagerServiceTest
+ * @title Ethan Pau
+ * @date 2019/4/2 10:43
+ * @description TODO
+ * @@version Version 1.0
  */
 
 @RunWith(SpringRunner.class)

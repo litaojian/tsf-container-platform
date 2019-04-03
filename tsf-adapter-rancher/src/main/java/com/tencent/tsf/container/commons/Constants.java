@@ -6,11 +6,11 @@
 package com.tencent.tsf.container.commons;
 
 /**
- * @Title Constants
- * @Author Ethan
- * @Date 2019/3/29 14:56
- * @Description TODO
- * @Version Version 1.0
+ * @title Constants
+ * @title Ethan
+ * @date 2019/3/29 14:56
+ * @description TODO
+ * @@version Version 1.0
  */
 public interface Constants {
 

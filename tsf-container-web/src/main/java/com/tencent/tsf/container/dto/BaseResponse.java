@@ -8,11 +8,11 @@ package com.tencent.tsf.container.dto;
 import lombok.Data;
 
 /**
- * @Title BaseResponse
- * @Author Ethan
- * @Date 2019/3/29 08:22
- * @Description TODO
- * @Version Version 1.0
+ * @title BaseResponse
+ * @title Ethan
+ * @date 2019/3/29 08:22
+ * @description TODO
+ * @@version Version 1.0
  */
 @Data
 public class BaseResponse {

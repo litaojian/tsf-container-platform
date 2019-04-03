@@ -17,11 +17,11 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * @Title RancherServerPath
- * @Author Ethan
- * @Date 2019/3/29 18:39
- * @Description TODO
- * @Version Version 1.0
+ * @title RancherServerPath
+ * @title Ethan
+ * @date 2019/3/29 18:39
+ * @description TODO
+ * @@version Version 1.0
  */
 
 @Data
@@ -33,10 +33,10 @@ public class RancherServerPath {
 
 	/**
 	 * @return
-	 * @Author Ethan
-	 * @Date 2019/3/29 18:45
+	 * @title Ethan
+	 * @date 2019/3/29 18:45
 	 * @Param
-	 * @Description  获取创建空集群的请求URL
+	 * @description  获取创建空集群的请求URL
 	 **/
 	public String createClusterUrl(){
 		StringBuilder url = new StringBuilder();
@@ -47,10 +47,10 @@ public class RancherServerPath {
 
 	/**
 	 * @return
-	 * @Author Ethan
-	 * @Date 2019/3/29 19:09
+	 * @title Ethan
+	 * @date 2019/3/29 19:09
 	 * @Param [clusterId]
-	 * @Description 获取单个集群的信息
+	 * @description 获取单个集群的信息
 	 **/
 	public String clusterInfoUrl(String clusterId) {
 		Assert.hasLength(clusterId, "集群ID不能为空！");
