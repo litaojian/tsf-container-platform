@@ -160,4 +160,24 @@ public class ClustersController extends BaseController{
 		log.info("--------------clusterId: {}", clusterId);
 		return "";
 	}
+
+	public BaseResponse getNamespace(@PathVariable("clusterId") String clusterId, @PathVariable("namespaceId") String namespaceId){
+		return null;
+	}
+
+	@GetMapping("/{clusterId}/namespaces")
+	@ApiOperation(value = "获取命名空间列表", httpMethod = "GET",
+			notes = "获取命名空间列表<br/>" +
+					"请求参数描述：" +
+					"<ul>" +
+					"<li>clusterId：集群ID</li>" +
+					"</ul>" +
+					"返回参数描述：<br/>", response = BaseResponse.class)
+	public BaseResponse getNamespaces(@PathVariable("clusterId") String clusterId, HttpServletRequest request){
+		Map<String, String> headers = getCustomHeaders(request);
+		Map<String, Object> params = getRequestParams(request);
+		Map data = clusterManagerService.getNamespaces(headers, params, clusterId);
+		log.info("---- namespaces gotten, data: {}", data);
+		return createSuccessResult(data);
+	}
 }

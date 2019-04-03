@@ -5,8 +5,10 @@
 
 package com.tencent.tsf.container.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.tencent.tsf.container.config.RancherKubernetesConfig;
 import com.tencent.tsf.container.config.RancherServerPath;
+import com.tencent.tsf.container.dto.NamespaceDTO;
 import com.tencent.tsf.container.service.ClusterManagerService;
 import com.tencent.tsf.container.utils.HttpClientUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -120,4 +124,49 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		}
 		return usage.toString();
 	}
+
+	@Override
+	public Map getNamespaceById(Map<String, String> headers, String clusterId, String namespaceId) {
+		Assert.hasLength(clusterId, "集群ID不能为空！");
+		Assert.hasLength(namespaceId, "命名空间ID不能为空！");
+
+		String url = rancherServerPath.namespaceInfoUrl(clusterId, namespaceId);
+		String result = HttpClientUtil.doGet(url, headers);
+		com.alibaba.fastjson.JSONObject jsonObject = JSON.parseObject(result);
+		if (jsonObject.get("data") == null) {
+			return null;
+		}
+		return (Map) jsonObject.get("data");
+	}
+
+	@Override
+	public Map<String, Object> getNamespaces(Map<String, String> headers, Map<String, Object> params, String clusterId) {
+		Assert.hasLength(clusterId, "集群ID不能为空！");
+
+		Map<String, Object> resultMap = new HashMap<>();
+		String url = rancherServerPath.getAllNamespacesUrl(clusterId, params);
+		String result = HttpClientUtil.doGet(url, headers);
+		com.alibaba.fastjson.JSONObject jsonObject = JSON.parseObject(result);
+		if (jsonObject.get("data") == null) {
+			resultMap.put("totalCount", 0);
+			resultMap.put("content", null);
+			return resultMap;
+		}
+		List<Map<String, Object>> dataList = (List) jsonObject.get("data");
+		List<NamespaceDTO> namespaceList = new ArrayList<>();
+		dataList.forEach(map -> {
+			NamespaceDTO namespaceDTO = new NamespaceDTO();
+			namespaceDTO.setId(map.get("id").toString());
+			namespaceDTO.setName(map.get("name").toString());
+			namespaceDTO.setStatus(map.get("state").toString());
+			namespaceDTO.setCreatedAt(map.get("created").toString());
+			namespaceList.add(namespaceDTO);
+		});
+
+		resultMap.put("totalCount", namespaceList.size());
+		resultMap.put("content", namespaceList);
+		return resultMap;
+	}
+
+
 }

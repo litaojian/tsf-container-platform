@@ -72,6 +72,38 @@ public class RancherServerPath {
 
 	}
 
+    /**
+     * 获取单个命名空间 URL
+     * @param clusterId
+     * @param namespaceId
+     * @return
+     */
+	public String namespaceInfoUrl(String clusterId, String namespaceId) {
+        Assert.hasLength(clusterId, "集群ID不能为空！");
+        Assert.hasLength(namespaceId, "命名空间ID不能为空！");
+        StringBuilder urlBuilder = new StringBuilder(rancherConfiguration.getEndpoint());
+        urlBuilder.append(RancherServerAPI.RANCHER_GET_NAMESPACE_INFO);
+        return String.format(urlBuilder.toString(), clusterId, namespaceId);
+    }
+
+	/**
+	 * 获取某个集群下所有命名空间  URL
+	 * @param clusterId
+	 * @param params
+	 * @return
+	 */
+	public String getAllNamespacesUrl(String clusterId, final Map<String, Object> params) {
+		StringBuilder urlBuilder = new StringBuilder();
+		urlBuilder.append(rancherConfiguration.getEndpoint())
+				.append(RancherServerAPI.RANCHER_GET_ALL_NAMESPACES);
+		String paramUrl = assembleGetMethodParams(params);
+		if (StringUtils.isNotBlank(paramUrl)) {
+			urlBuilder.append("?")
+					.append(paramUrl);
+		}
+		return String.format(urlBuilder.toString(), clusterId);
+	}
+
 	private static String assembleGetMethodParams(final Map<String, Object> params) {
 		if(CollectionUtils.isEmpty(params)) return "";
 		final StringBuilder urlBuilder = new StringBuilder();
