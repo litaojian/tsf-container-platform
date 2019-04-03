@@ -8,11 +8,11 @@ package com.tencent.tsf.container.service;
 import java.util.Map;
 
 /**
- * @title ClusterManagerService
- * @title Ethan
- * @date 2019/3/29 13:19
- * @description TODO
- * @@version Version 1.0
+ * @Title ClusterManagerService
+ * @Author Ethan
+ * @Date 2019/3/29 13:19
+ * @Description TODO
+ * @Version Version 1.0
  */
 
 public interface ClusterManagerService {
@@ -26,9 +26,5 @@ public interface ClusterManagerService {
 	String deleteClusterById(Map<String, String> headers, String clusterId);
 
 	String clusterUsage(Map<String, String> headers, String clusterId);
-
-	Map getNamespaceById(Map<String, String> headers, String clusterId, String namespaceId);
-
-	Map getNamespaces(Map<String, String> headers, Map<String, Object> params, String clusterId);
 
 }

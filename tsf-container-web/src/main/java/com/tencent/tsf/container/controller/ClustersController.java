@@ -5,7 +5,10 @@
 
 package com.tencent.tsf.container.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.dto.BaseResponse;
+import com.tencent.tsf.container.dto.NamespaceDTO;
 import com.tencent.tsf.container.service.ClusterManagerService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -16,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -159,25 +165,5 @@ public class ClustersController extends BaseController{
 	public String addNodes(@PathVariable("clusterId") String clusterId){
 		log.info("--------------clusterId: {}", clusterId);
 		return "";
-	}
-
-	public BaseResponse getNamespace(@PathVariable("clusterId") String clusterId, @PathVariable("namespaceId") String namespaceId){
-		return null;
-	}
-
-	@GetMapping("/{clusterId}/namespaces")
-	@ApiOperation(value = "获取命名空间列表", httpMethod = "GET",
-			notes = "获取命名空间列表<br/>" +
-					"请求参数描述：" +
-					"<ul>" +
-					"<li>clusterId：集群ID</li>" +
-					"</ul>" +
-					"返回参数描述：<br/>", response = BaseResponse.class)
-	public BaseResponse getNamespaces(@PathVariable("clusterId") String clusterId, HttpServletRequest request){
-		Map<String, String> headers = getCustomHeaders(request);
-		Map<String, Object> params = getRequestParams(request);
-		Map data = clusterManagerService.getNamespaces(headers, params, clusterId);
-		log.info("---- namespaces gotten, data: {}", data);
-		return createSuccessResult(data);
 	}
 }
