@@ -35,7 +35,7 @@ import java.util.Map;
  * @title Ethan
  * @date 2019/3/29 13:20
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 
 @Slf4j
@@ -51,21 +51,26 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	@Override
 	public String createCluster(Map<String, String> headers, String name) {
 		Assert.hasLength(name, "集群名称不能为空！");
+
+		RancherKubernetesConfig config = new RancherKubernetesConfig();
+		BeanUtils.copyProperties(rancherKubernetesConfig, config);
+		String param = createClusterDefaultParam(name, config);
+
+		headers.put("Content-Type", "application/json");
+
+		String url = rancherServerPath.createClusterUrl();
+		String result = HttpClientUtil.doPost(url, headers, param);
+		return result;
+	}
+
+	private String createClusterDefaultParam(String name, RancherKubernetesConfig config) {
 		Map<String, Object> param = new HashMap<>();
 		param.put("name", name);
 		param.put("dockerRootDir", "/var/lib/docker");
 		param.put("enableNetworkPolicy", false);
 		param.put("type", "cluster");
-		RancherKubernetesConfig config = new RancherKubernetesConfig();
-		BeanUtils.copyProperties(rancherKubernetesConfig, config);
 		param.put("rancherKubernetesEngineConfig", config);
-
-		System.out.println(JSON.toJSONString(param));
-
-		headers.put("Content-Type", "application/json");
-		String url = rancherServerPath.createClusterUrl();
-		String result = HttpClientUtil.doPost(url, headers, JSON.toJSONString(param));
-		return result;
+		return JSON.toJSONString(param);
 	}
 
 	@Override
@@ -124,11 +129,11 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		}
 		if(requested != null) {
 			usage.put("cpuRequest", requested.getCpu());
-			usage.put("memRequest", capacity.getMemory());
+			usage.put("memRequest", requested.getMemory());
 		}
 		if(limits != null) {
 			usage.put("cpuLimit", limits.getCpu());
-			usage.put("memLimit", capacity.getMemory());
+			usage.put("memLimit", limits.getMemory());
 		}
 		return usage.toString();
 	}

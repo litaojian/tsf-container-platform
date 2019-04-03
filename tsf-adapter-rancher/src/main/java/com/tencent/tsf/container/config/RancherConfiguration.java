@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * @title Ethan
  * @date 2019/3/29 11:04
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 
 @Data

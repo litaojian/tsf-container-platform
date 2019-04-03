@@ -24,7 +24,7 @@ import java.util.Map;
  * @title Ethan Pau
  * @date 2019/4/2 10:43
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 
 @RunWith(SpringRunner.class)

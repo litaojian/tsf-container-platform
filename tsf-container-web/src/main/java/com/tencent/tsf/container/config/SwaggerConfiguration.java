@@ -30,7 +30,7 @@ import java.util.List;
  * @title Ethan
  * @date 2019/3/29 08:41
  * @description swagger 配置信息
- * @@version Version 1.0
+ * @version Version 1.0
  */
 @Data
 @Configuration

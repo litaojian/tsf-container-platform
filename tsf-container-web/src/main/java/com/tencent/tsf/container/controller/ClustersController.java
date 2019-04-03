@@ -23,7 +23,7 @@ import java.util.Map;
  * @title Ethan
  * @date 2019/3/29 00:08
  * @description 集群管理
- * @@version Version 1.0
+ * @version Version 1.0
  */
 
 @Slf4j

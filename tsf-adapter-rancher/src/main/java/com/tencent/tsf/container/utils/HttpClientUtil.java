@@ -25,7 +25,7 @@ import java.util.*;
  * @title Ethan
  * @date 2019/3/29 11:41
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 @Slf4j
 public class HttpClientUtil {

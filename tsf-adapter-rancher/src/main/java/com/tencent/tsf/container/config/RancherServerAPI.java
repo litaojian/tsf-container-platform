@@ -10,7 +10,7 @@ package com.tencent.tsf.container.config;
  * @title Ethan
  * @date 2019/3/29 18:23
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 
 public class RancherServerAPI {

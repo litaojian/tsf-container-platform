@@ -12,7 +12,7 @@ import lombok.Data;
  * @title Ethan
  * @date 2019/3/29 08:22
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 @Data
 public class BaseResponse {

@@ -31,7 +31,7 @@ import java.net.UnknownHostException;
  * @title Ethan
  * @date 2019/3/29 11:46
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 public class HttpClientFactory {
 	private static final RequestConfig requestConfig = RequestConfig.custom()

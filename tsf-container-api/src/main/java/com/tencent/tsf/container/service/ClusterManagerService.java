@@ -12,7 +12,7 @@ import java.util.Map;
  * @title Ethan
  * @date 2019/3/29 13:19
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 
 public interface ClusterManagerService {

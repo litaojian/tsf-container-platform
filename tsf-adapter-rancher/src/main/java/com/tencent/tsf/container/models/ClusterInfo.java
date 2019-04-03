@@ -14,7 +14,7 @@ import java.util.Map;
  * @title Ethan Pau
  * @date 2019/4/2 10:21
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 @Data
 public class ClusterInfo {

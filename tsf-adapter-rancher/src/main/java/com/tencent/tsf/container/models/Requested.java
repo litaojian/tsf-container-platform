@@ -12,7 +12,7 @@ import lombok.Data;
  * @title Ethan Pau
  * @date 2019/4/2 10:34
  * @description TODO
- * @@version Version 1.0
+ * @version Version 1.0
  */
 @Data
 public class Requested extends BaseDeviceCase {
