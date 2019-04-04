@@ -9,10 +9,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -28,6 +25,27 @@ public class NamespacesController extends BaseController {
 
     @Autowired
     NamespaceManagerService namespaceManagerService;
+
+    @PostMapping("/{clusterId}/namespaces")
+    @ApiOperation(value = "创建命名空间", httpMethod = "POST",
+            notes = "创建命名空间<br/>" +
+                    "请求参数描述：" +
+                    "<ul>" +
+                    "<li>clusterId：集群ID</li>" +
+                    "<li>name：命名空间名称（String），必填</li>" +
+                    "</ul>" +
+                    "返回参数描述：<br/>", response = BaseResponse.class)
+    public BaseResponse createNamespace(@PathVariable("clusterId") String clusterId, @RequestParam("name")String name, HttpServletRequest request){
+        Map<String, String> headers = getCustomHeaders(request);
+
+        String data = namespaceManagerService.createNamespace(headers, clusterId, name);
+        JSONObject jsonObject = JSON.parseObject(data);
+        String id = jsonObject.get("id").toString();
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("id",id );
+        log.info("---- createNamespace gotten, data: {}", jsonObject);
+        return createSuccessResult(resultMap);
+    }
 
     @GetMapping("/{clusterId}/namespaces/{namespaceId}")
     @ApiOperation(value = "获取单个命名空间", httpMethod = "GET",
@@ -85,5 +103,22 @@ public class NamespacesController extends BaseController {
         resultMap.put("content", namespaceList);
         log.info("---- namespaces gotten, resultMap: {}", resultMap);
         return createSuccessResult(resultMap);
+    }
+
+    @DeleteMapping("/{clusterId}/namespaces/{namespaceId}")
+    @ApiOperation(value = "删除命名空间", httpMethod = "DELETE",
+            notes = "删除命名空间<br/>" +
+                    "请求参数描述：" +
+                    "<ul>" +
+                    "<li>clusterId：集群ID</li>" +
+                    "<li>namespaceId：命名空间ID</li>" +
+                    "</ul>" +
+                    "返回参数描述：<br/>", response = BaseResponse.class)
+    public BaseResponse deleteNamespace(@PathVariable("clusterId") String clusterId, @PathVariable("namespaceId") String namespaceId, HttpServletRequest request){
+        Map<String, String> headers = getCustomHeaders(request);
+        String data = namespaceManagerService.deleteNamespace(headers, clusterId, namespaceId);
+        JSONObject jsonObject = JSON.parseObject(data);
+        log.info("---- deleteNamespace gotten, data: {}", data);
+        return createSuccessResult(jsonObject);
     }
 }

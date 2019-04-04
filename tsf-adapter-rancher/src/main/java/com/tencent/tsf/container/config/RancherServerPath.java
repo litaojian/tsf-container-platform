@@ -72,6 +72,18 @@ public class RancherServerPath {
 
 	}
 
+	/**
+	 * 创建命名空间 URL
+	 * @param clusterId
+	 * @return
+	 */
+	public String createNamespaceUrl(String clusterId){
+		Assert.hasLength(clusterId, "集群ID不能为空！");
+		StringBuilder urlBuilder = new StringBuilder(rancherConfiguration.getEndpoint());
+		urlBuilder.append(RancherServerAPI.RANCHER_CREATE_NAMESPACE);
+		return String.format(urlBuilder.toString(), clusterId);
+	}
+
     /**
      * 获取单个命名空间 URL
      * @param clusterId
@@ -93,6 +105,8 @@ public class RancherServerPath {
 	 * @return
 	 */
 	public String getAllNamespacesUrl(String clusterId, final Map<String, Object> params) {
+		Assert.hasLength(clusterId, "集群ID不能为空！");
+
 		StringBuilder urlBuilder = new StringBuilder();
 		urlBuilder.append(rancherConfiguration.getEndpoint())
 				.append(RancherServerAPI.RANCHER_GET_ALL_NAMESPACES);
@@ -102,6 +116,15 @@ public class RancherServerPath {
 					.append(paramUrl);
 		}
 		return String.format(urlBuilder.toString(), clusterId);
+	}
+
+	public String deleteNamespaceUrl(String clusterId, String namespaceId){
+		Assert.hasLength(clusterId, "集群ID不能为空！");
+		Assert.hasLength(namespaceId, "命名空间ID不能为空！");
+		StringBuilder urlBuilder = new StringBuilder();
+		urlBuilder.append(rancherConfiguration.getEndpoint())
+				.append(RancherServerAPI.RANCHER_DELETE_NAMESPACE);
+		return String.format(urlBuilder.toString(), clusterId, namespaceId);
 	}
 
 	private static String assembleGetMethodParams(final Map<String, Object> params) {

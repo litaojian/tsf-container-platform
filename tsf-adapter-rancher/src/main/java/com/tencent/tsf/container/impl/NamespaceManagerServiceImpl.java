@@ -8,13 +8,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 @Service
 public class NamespaceManagerServiceImpl implements NamespaceManagerService {
+
     @Autowired
     RancherServerPath rancherServerPath;
+
+    @Override
+    public String createNamespace(Map<String, String> headers, String clusterId, String name) {
+        Assert.hasLength(clusterId, "集群ID不能为空！");
+
+        String url = rancherServerPath.createNamespaceUrl(clusterId);
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", name);
+        String result = HttpClientUtil.doPost(url, headers, params);
+        return result;
+    }
+
     @Override
     public String getNamespaceById(Map<String, String> headers, String clusterId, String namespaceId) {
         Assert.hasLength(clusterId, "集群ID不能为空！");
@@ -31,6 +45,16 @@ public class NamespaceManagerServiceImpl implements NamespaceManagerService {
 
         String url = rancherServerPath.getAllNamespacesUrl(clusterId, params);
         String result = HttpClientUtil.doGet(url, headers);
+        return result;
+    }
+
+    @Override
+    public String deleteNamespace(Map<String, String> headers, String clusterId, String namespaceId) {
+        Assert.hasLength(clusterId, "集群ID不能为空！");
+        Assert.hasLength(namespaceId, "命名空间ID不能为空！");
+
+        String url = rancherServerPath.deleteNamespaceUrl(clusterId, namespaceId);
+        String result = HttpClientUtil.doDelete(url, headers);
         return result;
     }
 

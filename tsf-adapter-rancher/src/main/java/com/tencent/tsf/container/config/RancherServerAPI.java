@@ -23,6 +23,8 @@ public class RancherServerAPI {
 	public static String RANCHER_GET_ALL_CLUSTERS       = "/clusters";
 	/** 删除集群 **/
 	public static String RANCHER_DELETE_CLUSTER         = "/clusters/%1$s";
+	/** 创建命名空间 **/
+	public static String RANCHER_CREATE_NAMESPACE       = "/cluster/%1$s/namespaces";
 	/** 获取单个命名空间 **/
 	public static String RANCHER_GET_NAMESPACE_INFO     = "/cluster/%1$s/namespaces/%2$s";
 	/** 获取某个集群下的所有命名空间 **/
@@ -31,5 +33,7 @@ public class RancherServerAPI {
 	public static String RANCHER_CLUSTER_REGISTRATION_TOKENS = "/clusters/%1$s/clusterregistrationtokens";
 	/** 获取集群节点信息 **/
 	public static String RANCHER_CLUSTER_NODES          = "/clusters/%1$s/nodes";
+	/** 删除命名空间 **/
+	public static String RANCHER_DELETE_NAMESPACE       = "/cluster/%1$s/namespaces/%2$s";
 
 }
