@@ -39,12 +39,6 @@ public class HttpClientUtil {
 			setRequestHeaders(httpPost, headers);
 
 			HttpResponse response = httpClient.execute(httpPost);
-			//TODO response headers 是否需要返回
-			Header[] responseHeaders = response.getAllHeaders();
-			log.info("all headers info: ");
-			Arrays.stream(responseHeaders)
-					.forEach(it -> log.info("---- {}: {}", it.getName(), it.getValue()));
-
 			return responseToStringEntity(response);
 		} catch (Exception ex) {
 			log.error("", ex);
@@ -98,11 +92,6 @@ public class HttpClientUtil {
 			entity.setContentType("application/json");
 			httpPost.setEntity(entity);
 			HttpResponse response = httpClient.execute(httpPost);
-			//TODO response headers 是否需要返回
-			Header[] responseHeaders = response.getAllHeaders();
-			log.info("all headers info: ");
-			Arrays.stream(responseHeaders)
-					.forEach(it -> log.info("---- {}: {}", it.getName(), it.getValue()));
 			return responseToStringEntity(response);
 		} catch (Exception ex) {
 			log.error("", ex);
@@ -112,17 +101,10 @@ public class HttpClientUtil {
 
 
 	public static String doGet(String url, Map<String, String> headers) {
-		String result = null;
 		try (CloseableHttpClient httpClient = HttpClientFactory.createHttpClient()) {
 			HttpGet httpGet = new HttpGet(url);
 			setRequestHeaders(httpGet, headers);
 			CloseableHttpResponse response = httpClient.execute(httpGet);
-
-			//TODO response headers 是否需要返回
-			Header[] responseHeaders = response.getAllHeaders();
-			log.info("all headers info: >>>>>>");
-			Arrays.stream(responseHeaders)
-					.forEach(it -> log.info("---- {}: {}", it.getName(), it.getValue()));
 			return responseToStringEntity(response);
 		} catch (IOException ioEx) {
 			log.error("", ioEx);

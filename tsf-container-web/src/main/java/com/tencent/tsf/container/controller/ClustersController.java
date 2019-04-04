@@ -47,10 +47,10 @@ public class ClustersController extends BaseController{
 					"</ul>" +
 					"返回参数描述：<br/>", response = BaseResponse.class)
 	public BaseResponse createCluster(HttpServletRequest request, @RequestBody Map<String,String> param){
-		log.info("---- create the empty of cluster and param is {}", param);
+		log.info("创建空集群, params： {}", param);
 		Map<String, String> headers = getCustomHeaders(request);
-
 		String data = clusterManagerService.createCluster(headers, param.get("name"));
+		log.debug("创建空集群, response data: {}", data);
 
 		return createSuccessResult(data);
 	}

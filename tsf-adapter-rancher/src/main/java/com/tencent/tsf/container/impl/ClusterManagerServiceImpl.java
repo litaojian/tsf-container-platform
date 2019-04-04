@@ -17,7 +17,6 @@ import com.tencent.tsf.container.models.ClusterInfo;
 import com.tencent.tsf.container.models.Limits;
 import com.tencent.tsf.container.models.Requested;
 import com.tencent.tsf.container.service.ClusterManagerService;
-import com.tencent.tsf.container.utils.ExecResult;
 import com.tencent.tsf.container.utils.HttpClientUtil;
 import com.tencent.tsf.container.utils.SSHHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -62,12 +61,12 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		RancherKubernetesConfig config = new RancherKubernetesConfig();
 		BeanUtils.copyProperties(rancherKubernetesConfig, config);
 		String param = createClusterDefaultParam(name, config);
-
 		headers.put("Content-Type", "application/json");
-
 		String url = rancherServerPath.createClusterUrl();
 		String result = HttpClientUtil.doPost(url, headers, param);
-		return result;
+		JSONObject obj = JSON.parseObject(result);
+		String id = obj.getString("id");
+		return "{\"id\": " + id + "}";
 	}
 
 	private String createClusterDefaultParam(String name, RancherKubernetesConfig config) {
