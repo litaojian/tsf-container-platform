@@ -22,7 +22,7 @@ public class ClusterVMDto implements Serializable {
 
 	private String clusterId;
 	private String username;
-	private String hostname;
+	private String ip;
 	private String password;
 	private Integer port = 22;
 	private Boolean isMaster;

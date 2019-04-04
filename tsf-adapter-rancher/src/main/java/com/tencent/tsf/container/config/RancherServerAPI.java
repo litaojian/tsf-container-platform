@@ -35,5 +35,7 @@ public class RancherServerAPI {
 	public static String RANCHER_CLUSTER_NODES          = "/clusters/%1$s/nodes";
 	/** 删除命名空间 **/
 	public static String RANCHER_DELETE_NAMESPACE       = "/cluster/%1$s/namespaces/%2$s";
+	/** 删除节点 **/
+	public static String RANCHER_DELETE_NODE            = "/nodes/%1$s";
 
 }

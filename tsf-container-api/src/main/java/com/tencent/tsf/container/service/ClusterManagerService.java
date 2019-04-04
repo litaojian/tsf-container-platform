@@ -33,4 +33,8 @@ public interface ClusterManagerService {
 	void setMasterNode(Map<String, String> headers, List<ClusterVMDto> masterNodes);
 
 	String clusterNodes(Map<String, String> headers, String clusterId);
+
+	void addNodes(Map<String, String> headers, List<ClusterVMDto> nodes);
+
+	void removeNodes(Map<String, String> headers, String clusterId, List<String> ipList);
 }

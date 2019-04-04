@@ -3,6 +3,7 @@ server:
   servlet:
     context-path: /v1.x
 
+
 spring:
   application:
     name: tsf-container-web
@@ -46,3 +47,6 @@ rancher:
         extraArgs:
           heartbeat-interval: 501
           election-timeout: 5001
+logging:
+  level:
+    root: debug

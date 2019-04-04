@@ -132,7 +132,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	}
 
 	private String requestAddNodeSSH(Map<String, String> headers, String clusterId) {
-		Assert.hasLength(clusterId, "添加master节点：集群ID不能为空！");
+		Assert.hasLength(clusterId, "添加节点：集群ID不能为空！");
 		String tokensUrl = rancherServerPath.clusterRegistrationTokenUrl(clusterId);
 		Map<String, Object> params = new HashMap<>();
 		params.put("clusterId", clusterId);
@@ -204,5 +204,41 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		});
 
 		return JSON.toJSONString(list);
+	}
+
+	@Override
+	public void addNodes(Map<String, String> headers, List<ClusterVMDto> nodes) {
+		Assert.notEmpty(nodes, "添加node节点：节点信息不能为空！");
+		ClusterVMDto node = nodes.get(0);
+		String clusterId = node.getClusterId();
+		String basicCommand = requestAddNodeSSH(headers, clusterId);
+		final String command = basicCommand + NODE_ROLE_NODE;
+		nodes.stream().forEach(it ->
+				SSHHelper.execCommand(command, it)
+		);
+	}
+
+	@Override
+	public void removeNodes(Map<String, String> headers, String clusterId, List<String> ipList) {
+		Assert.hasLength(clusterId, "获取集群节点列表：集群ID不能为空！");
+		String clusterNodeUrl = rancherServerPath.clusterNodeUrl(clusterId);
+		String response = HttpClientUtil.doGet(clusterNodeUrl, headers);
+		JSONObject obj = JSON.parseObject(response);
+		JSONArray data = (JSONArray) obj.get("data");
+		if (data == null || data.size() == 0) {
+			log.info("集群节点列表为空，集群ID：{}", clusterId);
+		}
+
+		data.stream().forEach(it ->{
+			JSONObject item = (JSONObject)it;
+			ipList.stream().forEach(ip -> {
+				if(ip.equalsIgnoreCase(item.getString("externalIpAddress")) ||
+					ip.equalsIgnoreCase(item.getString("ipAddress"))) {
+					String id = item.getString("id");
+					String removeNodeUrl = rancherServerPath.removeNodeUrl(id);
+					HttpClientUtil.doDelete(removeNodeUrl, headers);
+				}
+			});
+		});
 	}
 }

@@ -129,7 +129,7 @@ public class HttpClientUtil {
 		} catch (Exception ex) {
 			log.error("", ex);
 		}
-		return result;
+		return null;
 	}
 
 	public static String doDelete(String url, Map<String, String> headers) {

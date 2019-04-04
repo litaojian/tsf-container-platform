@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
@@ -69,7 +70,7 @@ public class SSHHelper {
 
 		Session session;
 		try {
-			session = jsch.getSession(sshHostInfo.getUsername(), sshHostInfo.getHostname(), sshHostInfo.getPort());
+			session = jsch.getSession(sshHostInfo.getUsername(), sshHostInfo.getIp(), sshHostInfo.getPort());
 		} catch (JSchException e) {
 			LOG.error("jsch.getSession failed", e);
 			throw new RuntimeException("登录host 或 username 无效");
@@ -122,7 +123,7 @@ public class SSHHelper {
 			session = SSHHelper.getConnectedSession(sshHostInfo);
 
 			channel = session.openChannel("exec");
-			((ChannelExec)channel).setCommand(command);
+			((ChannelExec) channel).setCommand(command);
 
 			ByteArrayOutputStream stdout = new ByteArrayOutputStream();
 			ByteArrayOutputStream stderr = new ByteArrayOutputStream();
@@ -151,6 +152,9 @@ public class SSHHelper {
 			} catch (UnsupportedEncodingException e) {
 				stderrString = stderr.toString();
 			}
+			LOG.debug("stdoutString: {}", stdoutString);
+			LOG.debug("stderrString: {}", stderrString);
+
 			return new ExecResult(stdoutString, stderrString, channel.getExitStatus());
 		} catch (JSchException e) {
 			LOG.error("SSH operation failed", e);

@@ -5,6 +5,7 @@
 
 package com.tencent.tsf.container.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.tencent.tsf.container.dto.BaseResponse;
 import com.tencent.tsf.container.dto.ClusterVMDto;
 import com.tencent.tsf.container.service.ClusterManagerService;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -50,8 +52,6 @@ public class ClustersController extends BaseController{
 		Map<String, String> headers = getCustomHeaders(request);
 		String data = clusterManagerService.createCluster(headers, name);
 
-		log.info("---- create successfully, data: {}", data);
-
 		return createSuccessResult(data);
 	}
 
@@ -64,10 +64,11 @@ public class ClustersController extends BaseController{
 					"</ul>" +
 					"返回参数描述：<br/>", response = BaseResponse.class)
 	public BaseResponse getCluster(HttpServletRequest request, @PathVariable("clusterId") String clusterId) {
+		log.info("查询单个集群信息, 集群ID: {}", clusterId);
 
 		Map<String, String> headers = getCustomHeaders(request);
 		String result = clusterManagerService.getClusterById(headers, clusterId);
-
+		log.debug("查询单个集群信息 -> ", result);
 		return createSuccessResult(result);
 	}
 
@@ -80,12 +81,13 @@ public class ClustersController extends BaseController{
 					"</ul>" +
 					"返回参数描述：<br/>", response = BaseResponse.class)
 	public BaseResponse getClusters(HttpServletRequest request){
+		log.info("-> 获取集群列表");
 
 		Map<String, String> headers = getCustomHeaders(request);
 		Map<String, Object> params = getRequestParams(request);
 		String data = clusterManagerService.getClusters(headers, params);
 
-		log.info("---- clusters gotten, data: {}", data);
+		log.debug("clusters gotten, data: {}", data);
 
 		return createSuccessResult(data);
 	}
@@ -101,11 +103,12 @@ public class ClustersController extends BaseController{
 					"返回参数描述：<br/>", response = BaseResponse.class)
 	public BaseResponse deleteCluster(HttpServletRequest request,
 	                                  @PathVariable("clusterId") String clusterId){
+		log.info("删除集群, 集群ID: {}", clusterId);
 
 		Map<String, String> headers = getCustomHeaders(request);
 		String data = clusterManagerService.deleteClusterById(headers, clusterId);
 
-		log.info("---- delete successfully, data: {}", data);
+		log.debug("cluster deleted successfully, data: {}", data);
 
 		return createSuccessResult(data);
 	}
@@ -120,8 +123,11 @@ public class ClustersController extends BaseController{
 					"返回参数描述：<br/>", response = BaseResponse.class)
 	public BaseResponse clusterUsage(HttpServletRequest request,
 	                                 @PathVariable("clusterId") String clusterId){
+		log.info("集群资源对使用情况, 集群ID: {}", clusterId);
+
 		Map<String, String> headers = getCustomHeaders(request);
 		String data = clusterManagerService.clusterUsage(headers, clusterId);
+		log.debug("cluster usage, result -> {}", data);
 		return createSuccessResult(data);
 	}
 
@@ -132,39 +138,93 @@ public class ClustersController extends BaseController{
 			"请求参数描述：" +
 			"<ul>" +
 				"<li>URI参数: clusterId——集群ID，必填</li>" +
-				"<li>请求体参数: \"instances\": [\n" +
+				"<li>请求体参数: {\"instances\": [\n" +
 					"{\"ip\": \"172.16.1.20\",\"port\": 22," +
 					"\"username\": \"root\",\"password\": \"pa55w0rd\"\n" +
-					"}], 必填</li>" +
+					"}]}, 必填</li>" +
 			"</ul>" +
 			"返回参数描述<p></p>", response = BaseResponse.class)
 	public BaseResponse setupMaster(HttpServletRequest request,
 	                          @PathVariable("clusterId") String clusterId,
 	                          @RequestBody Map<String, List<ClusterVMDto>> params) {
-		log.info("===============clusterId: {}", clusterId);
+		log.info("设置master节点, 集群ID: {}, host: {}", clusterId, JSON.toJSONString(params));
+
 		Map<String, String> headers = getCustomHeaders(request);
 		List<ClusterVMDto> nodes = params.get("instances");
-		nodes.stream().forEach(it -> it.setIsMaster(true));
+		nodes.stream().forEach(it -> {
+				it.setIsMaster(true);
+				it.setClusterId(clusterId);
+		});
 		clusterManagerService.setMasterNode(headers, nodes);
 		return createSuccessResult("{}");
 	}
 
 	@PostMapping("/{clusterId}:addNodes")
-	public String addNodes(@PathVariable("clusterId") String clusterId){
-		return "";
+	@ApiOperation(value = "将机器作为 node 节点加入 Kubernetes 集群", httpMethod = "POST",
+			notes = "将机器作为 node 节点加入 Kubernetes 集群<br>" +
+					"请求参数描述：" +
+					"<ul>" +
+					"<li>URI参数: clusterId——集群ID，必填</li>" +
+					"<li>请求体参数: \"instances\": [\n" +
+					"{\"ip\": \"172.16.1.20\",\"port\": 22," +
+					"\"username\": \"root\",\"password\": \"pa55w0rd\"\n" +
+					"}], 必填</li>" +
+					"</ul>" +
+					"返回参数描述<p></p>", response = BaseResponse.class)
+	public BaseResponse addNodes(HttpServletRequest request,
+	                       @PathVariable("clusterId") String clusterId,
+	                       @RequestBody Map<String, List<ClusterVMDto>> params){
+		log.info("添加node节点, 集群ID: {}, host: {}", clusterId, JSON.toJSONString(params));
+
+		Map<String, String> headers = getCustomHeaders(request);
+		List<ClusterVMDto> nodes = params.get("instances");
+		nodes.stream().forEach(it -> {
+			it.setIsMaster(false);
+			it.setClusterId(clusterId);
+		});
+		clusterManagerService.addNodes(headers, nodes);
+		return createSuccessResult("{}");
 	}
 
 	@DeleteMapping("/{clusterId}:removeNodes")
-	public String removeNodes(@PathVariable("clusterId") String clusterId){
-		log.info("--------------clusterId: {}", clusterId);
+	@ApiOperation(value = "将 node 节点从 Kubernetes 集群中移除", httpMethod = "DELETE",
+			notes = "将 node 节点从 Kubernetes 集群中移除<br>" +
+					"请求参数描述：" +
+					"<ul>" +
+					"<li>URI参数: clusterId——集群ID，必填</li>" +
+					"<li>请求体参数: \"instances\": [\n" +
+					"{\"ip\": \"172.16.1.20\",\"ip\": \"172.16.1.21\"" +
+					"}], 必填</li>" +
+					"</ul>" +
+					"返回参数描述<p></p>", response = BaseResponse.class)
+	public String removeNodes(HttpServletRequest request,
+	                          @PathVariable("clusterId") String clusterId,
+	                          @RequestBody Map<String, List<Map<String, String>>> params){
+		log.info("将 node 节点从 Kubernetes 集群中移除, 集群ID: {}, ips: {}", clusterId, JSON.toJSONString(params));
+
+		Map<String, String> headers = getCustomHeaders(request);
+		List<Map<String, String>>ipMap = params.get("instances");
+		final List<String> ipList = new ArrayList<>();
+		ipMap.stream().forEach(it -> ipList.add(it.get("ip")));
+		clusterManagerService.removeNodes(headers, clusterId, ipList);
 		return "";
 	}
 
-	@PostMapping("/{clusterId}/nodes")
+	@GetMapping("/{clusterId}/nodes")
+	@ApiOperation(value = "获取集群 node 节点信息", httpMethod = "GET",
+			notes = "获取集群内 node 节点的基本信息和资源使用。这个接口不返回 master 结点的状态信息。<br>" +
+					"请求参数描述：" +
+					"<ul>" +
+					"<li>URI参数: clusterId——集群ID，必填</li>" +
+					"</ul>" +
+					"返回参数描述<p></p>", response = BaseResponse.class)
 	public BaseResponse nodes(HttpServletRequest request,
 	                    @PathVariable("clusterId") String clusterId){
+		log.info("获取集群 node 节点信息, 集群ID: {}", clusterId);
+
 		Map<String, String> headers = getCustomHeaders(request);
 		String data = clusterManagerService.clusterNodes(headers, clusterId);
+		log.debug("nodes info, result: {}", data);
 		return createSuccessResult(data);
 	}
 }

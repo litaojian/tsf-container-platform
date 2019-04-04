@@ -192,4 +192,12 @@ public class RancherServerPath {
 		return String.format(urlBuilder.toString(), clusterId);
 	}
 
+	public String removeNodeUrl(String nodeId){
+		Assert.hasLength(nodeId, "节点ID不能为空!");
+		StringBuilder urlBuilder = new StringBuilder();
+		urlBuilder.append(rancherConfiguration.getEndpoint())
+				.append(RancherServerAPI.RANCHER_DELETE_NODE);
+		return String.format(urlBuilder.toString(), nodeId);
+	}
+
 }
