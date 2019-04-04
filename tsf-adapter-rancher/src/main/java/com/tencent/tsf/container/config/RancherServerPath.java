@@ -146,4 +146,27 @@ public class RancherServerPath {
 		return String.format(urlBuilder.toString(), clusterId);
 	}
 
+	public String clusterRegistrationTokenUrl(String clusterId){
+		Assert.hasLength(clusterId, "集群ID不能为空!");
+		StringBuilder urlBuilder = new StringBuilder();
+		urlBuilder.append(rancherConfiguration.getEndpoint())
+				.append(RancherServerAPI.RANCHER_CLUSTER_REGISTRATION_TOKENS);
+		return String.format(urlBuilder.toString(), clusterId);
+	}
+
+	/**
+	 * @return java.lang.String
+	 * @author Ethan Pau
+	 * @date 2019/4/3 15:17
+	 * @param clusterId
+	 * @description TODO
+	 **/
+	public String clusterNodeUrl(String clusterId){
+		Assert.hasLength(clusterId, "集群ID不能为空!");
+		StringBuilder urlBuilder = new StringBuilder();
+		urlBuilder.append(rancherConfiguration.getEndpoint())
+				.append(RancherServerAPI.RANCHER_CLUSTER_NODES);
+		return String.format(urlBuilder.toString(), clusterId);
+	}
+
 }

@@ -5,9 +5,15 @@
 
 package com.tencent.tsf.container.utils;
 
-import com.jcraft.jsch.*;
 
-import javax.swing.*;
+import com.jcraft.jsch.*;
+import com.tencent.tsf.container.dto.ClusterVMDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 
 /**
  * @author Ethan Pau
@@ -18,123 +24,145 @@ import javax.swing.*;
  */
 public class SSHHelper {
 
-	public static void main(String[] args) {
-		try {
-			JSch jsch = new JSch();
-			String host = null;
-			if (args.length > 0) {
-				host = args[0];
-			} else {
-				host = JOptionPane.showInputDialog("Enter username@hostname",
-						System.getProperty("user.name") +
-								"@localhost");
+	private static final Logger LOG = LoggerFactory.getLogger(SSHHelper.class);
+	private static final Logger JSCH_LOG = LoggerFactory.getLogger(com.jcraft.jsch.JSch.class);
+
+	public static class JschLogger implements com.jcraft.jsch.Logger {
+		public boolean isEnabled(int level) {
+			return true;
+		}
+
+		public void log(int level, String message) {
+			switch (level) {
+				case DEBUG:
+					JSCH_LOG.debug(message);
+					break;
+				case INFO:
+					// Jsch 大量打了大量 INFO 级的 debug 信息
+					JSCH_LOG.debug(message);
+					break;
+				case WARN:
+					JSCH_LOG.warn(message);
+					break;
+				case ERROR:
+					JSCH_LOG.error(message);
+					break;
+				case FATAL:
+					JSCH_LOG.error(message);
+					break;
 			}
-			String user = host.substring(0, host.indexOf('@'));
-			host = host.substring(host.indexOf('@') + 1);
-
-			Session session = jsch.getSession(user, host, 22);
-
-			String passwd = JOptionPane.showInputDialog("Enter password");
-			session.setPassword(passwd);
-
-			UserInfo ui = new MyUserInfo() {
-				public void showMessage(String message) {
-					JOptionPane.showMessageDialog(null, message);
-				}
-
-				public boolean promptYesNo(String message) {
-					Object[] options = {"yes", "no"};
-					int foo = JOptionPane.showOptionDialog(null,
-							message,
-							"Warning",
-							JOptionPane.DEFAULT_OPTION,
-							JOptionPane.WARNING_MESSAGE,
-							null, options, options[0]);
-					return foo == 0;
-				}
-
-				// If password is not given before the invocation of Session#connect(),
-				// implement also following methods,
-				//   * UserInfo#getPassword(),
-				//   * UserInfo#promptPassword(String message) and
-				//   * UIKeyboardInteractive#promptKeyboardInteractive()
-
-			};
-
-			session.setUserInfo(ui);
-
-			// It must not be recommended, but if you want to skip host-key check,
-			// invoke following,
-			// session.setConfig("StrictHostKeyChecking", "no");
-
-			//session.connect();
-			session.connect(30000);   // making a connection with timeout.
-
-			Channel channel = session.openChannel("shell");
-
-			// Enable agent-forwarding.
-			//((ChannelShell)channel).setAgentForwarding(true);
-
-			channel.setInputStream(System.in);
-      /*
-      // a hack for MS-DOS prompt on Windows.
-      channel.setInputStream(new FilterInputStream(System.in){
-          public int read(byte[] b, int off, int len)throws IOException{
-            return in.read(b, off, (len>1024?1024:len));
-          }
-        });
-       */
-
-			channel.setOutputStream(System.out);
-
-      /*
-      // Choose the pty-type "vt102".
-      ((ChannelShell)channel).setPtyType("vt102");
-      */
-
-      /*
-      // Set environment variable "LANG" as "ja_JP.eucJP".
-      ((ChannelShell)channel).setEnv("LANG", "ja_JP.eucJP");
-      */
-
-			//channel.connect();
-			channel.connect(3 * 1000);
-		} catch (Exception e) {
-			System.out.println(e);
 		}
 	}
 
-	public static abstract class MyUserInfo
-			implements UserInfo, UIKeyboardInteractive {
-		public String getPassword() {
-			return null;
+	static {
+		// WARNING: 如果有别的地方用 JSch，也会受到影响
+		JSch.setLogger(new JschLogger());
+	}
+
+	/**
+	 * 如果提供的用户名有误，对端的 SSH server 会有一个 FAIL_DELAY，通常会是 2-3s；这导致这个函数会有 1s 延时才返回，定义在下面的 setTimeout 函数。
+	 * <p>
+	 * <b>注意：调用方必须负责将 session.disconnect()。</b>
+	 */
+	public static Session getConnectedSession(ClusterVMDto sshHostInfo) {
+		JSch jsch = new JSch();
+
+		Session session;
+		try {
+			session = jsch.getSession(sshHostInfo.getUsername(), sshHostInfo.getHostname(), sshHostInfo.getPort());
+		} catch (JSchException e) {
+			LOG.error("jsch.getSession failed", e);
+			throw new RuntimeException("登录host 或 username 无效");
 		}
 
-		public boolean promptYesNo(String str) {
-			return false;
+		session.setPassword(sshHostInfo.getPassword());
+		// 不要检查 host key，因为我们不会提前把要连接主机的 host key 加进来
+		session.setConfig("StrictHostKeyChecking", "no");
+		// 不要重试了，失败就失败
+		session.setConfig("MaxAuthTries", "1");
+		// 仅使用密码去尝试登陆；默认会有四种方式（参考 JSch 类的源码），验证起来很慢
+		session.setConfig("PreferredAuthentications", "password");
+
+		// Ciphers, kex algorithm, signatures 参数选择，参考了 Mozilla 的 OpenSSH guideline：
+		// https://infosec.mozilla.org/guidelines/openssh.html
+		// 选取的是 Modern OpenSSH 6.7+，CentOS 7 带的 OpenSSH 都符合这个要求。
+
+		// 原本想要加快速度，但是发现没什么卵用
+		// session.setConfig("CheckCiphers", "aes256-ctr");
+		// session.setConfig("CheckKexes", "ecdh-sha2-nistp521");
+		// session.setConfig("CheckSignatures", "ecdsa-sha2-nistp521");
+
+		try {
+			// Timeout in ms
+			session.setTimeout(1000);
+		} catch (JSchException e) {
+			LOG.error("jsch session.setTimeout failed", e);
+			throw new RuntimeException("登录失败");
 		}
 
-		public String getPassphrase() {
-			return null;
+		try {
+			session.connect();
+		} catch (JSchException e) {
+			LOG.error("jsch connect failed", e);
+			if ("Auth fail".equals(e.getMessage())) {
+				LOG.debug("SSH Auth failed, {}", sshHostInfo);
+				throw new RuntimeException("SSH 认证失败，请确认用户名密码是否正确！");
+			} else {
+				throw new RuntimeException("SSH 连接到目标机器失败！");
+			}
 		}
 
-		public boolean promptPassphrase(String message) {
-			return false;
-		}
+		return session;
+	}
 
-		public boolean promptPassword(String message) {
-			return false;
-		}
+	public static ExecResult execCommand(String command, ClusterVMDto sshHostInfo) throws RuntimeException {
+		Session session = null;
+		Channel channel = null;
+		try {
+			session = SSHHelper.getConnectedSession(sshHostInfo);
 
-		public void showMessage(String message) {
-		}
+			channel = session.openChannel("exec");
+			((ChannelExec)channel).setCommand(command);
 
-		public String[] promptKeyboardInteractive(String destination,
-		                                          String name,
-		                                          String instruction,
-		                                          String[] prompt,
-		                                          boolean[] echo) {
-			return null;
+			ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+			ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+			channel.setInputStream(null);
+			channel.setOutputStream(stdout);
+			((ChannelExec) channel).setErrStream(stderr);
+
+			// in milli-seconds (1E-3 second)
+			channel.connect(1000);
+			while (!channel.isClosed()) {
+				try {
+					Thread.sleep(50);
+				} catch (Exception e) {
+					// safely ignored
+				}
+			}
+
+			String stdoutString, stderrString;
+			try {
+				stdoutString = stdout.toString("UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				stdoutString = stdout.toString();
+			}
+			try {
+				stderrString = stderr.toString("UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				stderrString = stderr.toString();
+			}
+			return new ExecResult(stdoutString, stderrString, channel.getExitStatus());
+		} catch (JSchException e) {
+			LOG.error("SSH operation failed", e);
+			throw new RuntimeException("SSH 操作失败！");
+		} finally {
+			if (channel != null) {
+				channel.disconnect();
+			}
+			if (session != null) {
+				session.disconnect();
+			}
 		}
 	}
+
 }

@@ -27,5 +27,9 @@ public class RancherServerAPI {
 	public static String RANCHER_GET_NAMESPACE_INFO     = "/cluster/%1$s/namespaces/%2$s";
 	/** 获取某个集群下的所有命名空间 **/
 	public static String RANCHER_GET_ALL_NAMESPACES     = "/cluster/%1$s/namespaces";
+	/** 获取添加节点的命令 **/
+	public static String RANCHER_CLUSTER_REGISTRATION_TOKENS = "/clusters/%1$s/clusterregistrationtokens";
+	/** 获取集群节点信息 **/
+	public static String RANCHER_CLUSTER_NODES          = "/clusters/%1$s/nodes";
 
 }

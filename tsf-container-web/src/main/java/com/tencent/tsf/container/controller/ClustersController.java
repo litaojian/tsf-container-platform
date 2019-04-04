@@ -5,22 +5,16 @@
 
 package com.tencent.tsf.container.controller;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.dto.BaseResponse;
-import com.tencent.tsf.container.dto.NamespaceDTO;
+import com.tencent.tsf.container.dto.ClusterVMDto;
 import com.tencent.tsf.container.service.ClusterManagerService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -131,39 +125,46 @@ public class ClustersController extends BaseController{
 		return createSuccessResult(data);
 	}
 
-	@GetMapping("/{clusterId}/deploymentScript")
-	@ApiOperation(value = "获取将机器加入/移出集群的脚本", httpMethod = "GET",
-			notes = "获取将机器加入/移出集群的脚本<br>" +
-					"请求参数描述：" +
-					"<ul>" +
-					"<li>clusterId：集群ID</li>" +
-					"</ul>" +
-					"返回参数描述<p></p>", response = BaseResponse.class)
-	public BaseResponse deployScript(HttpServletRequest request,
-	                                 @PathVariable("clusterId") String clusterId) {
-
-		return null;
-	}
-
-
-
 
 	@PostMapping("/{clusterId}:setupMaster")
 	@ApiOperation(value = "设置master节点", httpMethod = "POST",
 			notes = "设置master节点<br>" +
 			"请求参数描述：" +
 			"<ul>" +
-				"<li>clusterId：集群ID</li>" +
+				"<li>URI参数: clusterId——集群ID，必填</li>" +
+				"<li>请求体参数: \"instances\": [\n" +
+					"{\"ip\": \"172.16.1.20\",\"port\": 22," +
+					"\"username\": \"root\",\"password\": \"pa55w0rd\"\n" +
+					"}], 必填</li>" +
 			"</ul>" +
 			"返回参数描述<p></p>", response = BaseResponse.class)
-	public String setupMaster(@PathVariable("clusterId") String clusterId) {
+	public BaseResponse setupMaster(HttpServletRequest request,
+	                          @PathVariable("clusterId") String clusterId,
+	                          @RequestBody Map<String, List<ClusterVMDto>> params) {
 		log.info("===============clusterId: {}", clusterId);
-		return clusterId;
+		Map<String, String> headers = getCustomHeaders(request);
+		List<ClusterVMDto> nodes = params.get("instances");
+		nodes.stream().forEach(it -> it.setIsMaster(true));
+		clusterManagerService.setMasterNode(headers, nodes);
+		return createSuccessResult("{}");
 	}
 
 	@PostMapping("/{clusterId}:addNodes")
 	public String addNodes(@PathVariable("clusterId") String clusterId){
+		return "";
+	}
+
+	@DeleteMapping("/{clusterId}:removeNodes")
+	public String removeNodes(@PathVariable("clusterId") String clusterId){
 		log.info("--------------clusterId: {}", clusterId);
 		return "";
+	}
+
+	@PostMapping("/{clusterId}/nodes")
+	public BaseResponse nodes(HttpServletRequest request,
+	                    @PathVariable("clusterId") String clusterId){
+		Map<String, String> headers = getCustomHeaders(request);
+		String data = clusterManagerService.clusterNodes(headers, clusterId);
+		return createSuccessResult(data);
 	}
 }

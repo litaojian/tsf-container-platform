@@ -5,6 +5,9 @@
 
 package com.tencent.tsf.container.service;
 
+import com.tencent.tsf.container.dto.ClusterVMDto;
+
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,4 +30,7 @@ public interface ClusterManagerService {
 
 	String clusterUsage(Map<String, String> headers, String clusterId);
 
+	void setMasterNode(Map<String, String> headers, List<ClusterVMDto> masterNodes);
+
+	String clusterNodes(Map<String, String> headers, String clusterId);
 }
