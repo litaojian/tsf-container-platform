@@ -6,6 +6,7 @@
 package com.tencent.tsf.container.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.dto.BaseResponse;
 import com.tencent.tsf.container.dto.ClusterVMDto;
 import com.tencent.tsf.container.service.ClusterManagerService;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,8 +53,9 @@ public class ClustersController extends BaseController{
 		Map<String, String> headers = getCustomHeaders(request);
 		String data = clusterManagerService.createCluster(headers, param.get("name"));
 		log.debug("创建空集群, response data: {}", data);
-
-		return createSuccessResult(data);
+		JSONObject map = new JSONObject();
+		map.put("id", data);
+		return createSuccessResult(map);
 	}
 
 	@GetMapping("/{clusterId}")

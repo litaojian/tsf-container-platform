@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.config.RancherKubernetesConfig;
 import com.tencent.tsf.container.config.RancherServerPath;
+import com.tencent.tsf.container.dto.ClusterInfoDto;
 import com.tencent.tsf.container.dto.ClusterNodeDto;
 import com.tencent.tsf.container.dto.ClusterVMDto;
 import com.tencent.tsf.container.models.Capacity;
@@ -21,15 +22,15 @@ import com.tencent.tsf.container.utils.HttpClientUtil;
 import com.tencent.tsf.container.utils.SSHHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -66,7 +67,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		String result = HttpClientUtil.doPost(url, headers, param);
 		JSONObject obj = JSON.parseObject(result);
 		String id = obj.getString("id");
-		return "{\"id\": " + id + "}";
+		return id;
 	}
 
 	private String createClusterDefaultParam(String name, RancherKubernetesConfig config) {
@@ -89,10 +90,92 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	}
 
 	@Override
-	public String getClusters(Map<String, String> headers, Map<String, Object> params) {
+	public String getClusters(final Map<String, String> headers, Map<String, Object> params) {
 		String url = rancherServerPath.getAllClustersUrl(params);
 		String result = HttpClientUtil.doGet(url, headers);
+		JSONObject resultObj = JSON.parseObject(result);
+		JSONArray clusterList = resultObj.getJSONArray("data");
+		if (clusterList == null || clusterList.size() == 0) {
+			return "{}";
+		}
+
+		List<ClusterInfoDto> list = new ArrayList<>();
+
+		clusterList.stream().forEach(it -> {
+			ClusterInfoDto clusterInfoDto = new ClusterInfoDto();
+
+			JSONObject cluster = (JSONObject) it;
+			String createdAt = cluster.getString("created");
+			String id = cluster.getString("id");
+			String name = cluster.getString("name");
+			JSONObject requested = cluster.getJSONObject("requested");
+			String pods = "0";
+			String status = "";
+			if (requested != null) {
+				pods = requested.getString("pods");
+			}
+			Integer runningPodNum = Integer.valueOf(pods);
+			String state = cluster.getString("state");
+			if (StringUtils.isNotBlank(state)) {
+				switch (state) {
+//					Uninitialized
+//				    Creating
+//					Running
+//					Abnormal
+					case "active":
+						status = "Running";
+				}
+			}
+			clusterInfoDto.setCreatedAt(createdAt);
+			clusterInfoDto.setId(id);
+			clusterInfoDto.setName(name);
+			clusterInfoDto.setRunningPodNum(runningPodNum);
+			clusterInfoDto.setStatus(status);
+
+			getNodePodInfo(id, headers, clusterInfoDto);
+		});
+
+
 		return result;
+	}
+
+	private void getNodePodInfo(String id, Map<String, String> headers, ClusterInfoDto clusterInfoDto) {
+		String clusterNodeUrl = rancherServerPath.clusterNodeUrl(id);
+		String response = HttpClientUtil.doGet(clusterNodeUrl, headers);
+		JSONObject obj = JSON.parseObject(response);
+		JSONArray data = (JSONArray) obj.get("data");
+
+		StringBuilder cidr = new StringBuilder();
+		AtomicInteger totalNodeNum = new AtomicInteger(0);
+		AtomicInteger runningNodeNum = new AtomicInteger(0);
+		StringBuilder updatedAt = new StringBuilder();
+
+		final AtomicLong tmp = new AtomicLong(0);
+		data.stream().forEach(item -> {
+			JSONObject node = (JSONObject) item;
+			Boolean worker = node.getBooleanValue("worker");
+			if (Boolean.TRUE.equals(worker)) {
+				totalNodeNum.addAndGet(1);
+				String nodeState = node.getString("state");
+				if ("active".equalsIgnoreCase(nodeState)) {
+					runningNodeNum.addAndGet(1);
+				}
+				String podCidr = node.getString("podCidr");
+				if(StringUtils.isNotBlank(cidr.toString())){
+					cidr.append(",");
+				}
+				cidr.append(podCidr);
+				long createdTS = node.getLongValue("createdTS");
+				if(createdTS > tmp.longValue()) {
+					tmp.set(createdTS);
+//					updatedAt.setCharAt(0, node.getString("created"));
+				}
+			}
+		});
+		clusterInfoDto.setRunningNodeNum(runningNodeNum.get());
+		clusterInfoDto.setTotalNodeNum(totalNodeNum.get());
+		clusterInfoDto.setCidr(cidr.toString());
+//		clusterInfoDto.setUpdatedAt(updatedAt);
 	}
 
 	@Override
@@ -125,7 +208,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		final String command = basicCommand + NODE_ROLE_MASTER;
 
 		masterNodes.stream().forEach(it ->
-			SSHHelper.execCommand(command, it)
+				SSHHelper.execCommand(command, it)
 		);
 
 	}
@@ -185,7 +268,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		}
 		List<ClusterNodeDto> list = new ArrayList<>();
 		data.stream().forEach(it -> {
-			if(Boolean.TRUE.equals(((JSONObject) it).get("worker"))) {
+			if (Boolean.TRUE.equals(((JSONObject) it).get("worker"))) {
 				JSONObject item = (JSONObject) it;
 				ClusterNodeDto info = JSON.parseObject(JSON.toJSONString(it), ClusterNodeDto.class);
 				info.setCpuLimit(null); //TODO 需获取pod信息 计算得出
@@ -199,6 +282,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 				info.setStatus(item.getString("state"));
 				info.setCreatedAt(item.getString("created"));
 				info.setUpdatedAt(null);
+				list.add(info);
 			}
 		});
 
@@ -228,16 +312,30 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 			log.info("集群节点列表为空，集群ID：{}", clusterId);
 		}
 
-		data.stream().forEach(it ->{
-			JSONObject item = (JSONObject)it;
+		data.stream().forEach(it -> {
+			JSONObject item = (JSONObject) it;
 			ipList.stream().forEach(ip -> {
-				if(ip.equalsIgnoreCase(item.getString("externalIpAddress")) ||
-					ip.equalsIgnoreCase(item.getString("ipAddress"))) {
+				if (ip.equalsIgnoreCase(item.getString("externalIpAddress")) ||
+						ip.equalsIgnoreCase(item.getString("ipAddress"))) {
 					String id = item.getString("id");
 					String removeNodeUrl = rancherServerPath.removeNodeUrl(id);
 					HttpClientUtil.doDelete(removeNodeUrl, headers);
 				}
 			});
 		});
+	}
+
+	public static void main (String[] args) {
+		Date dt = new Date();
+		dt.setTime(1554366423000L);
+		System.out.println(DateFormatUtils.format(dt, "yyyy-MM-dd HH:mm:ss,SSS"));
+		System.out.println("2019-04-04T08:24:10Z");
+
+
+		final StringBuilder tmp = new StringBuilder();
+		tmp.append("1234567890");
+		tmp.setLength(0);
+		tmp.append("dfghjkl");
+		System.out.println(tmp.toString());
 	}
 }
