@@ -22,7 +22,6 @@ import com.tencent.tsf.container.utils.HttpClientUtil;
 import com.tencent.tsf.container.utils.SSHHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -68,7 +67,6 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		JSONObject obj = JSON.parseObject(result);
 		String id = obj.getString("id");
 		return "{\"id\": \"" + id + "\"}";
-		return id;
 	}
 
 	private String createClusterDefaultParam(String name, RancherKubernetesConfig config) {
@@ -91,13 +89,13 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	}
 
 	@Override
-	public String getClusters(final Map<String, String> headers, Map<String, Object> params) {
+	public List<ClusterInfoDto> getClusters(final Map<String, String> headers, Map<String, Object> params) {
 		String url = rancherServerPath.getAllClustersUrl(params);
 		String result = HttpClientUtil.doGet(url, headers);
 		JSONObject resultObj = JSON.parseObject(result);
 		JSONArray clusterList = resultObj.getJSONArray("data");
 		if (clusterList == null || clusterList.size() == 0) {
-			return "{}";
+			return Collections.EMPTY_LIST;
 		}
 
 		List<ClusterInfoDto> list = new ArrayList<>();
@@ -106,38 +104,45 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 			ClusterInfoDto clusterInfoDto = new ClusterInfoDto();
 
 			JSONObject cluster = (JSONObject) it;
-			String createdAt = cluster.getString("created");
+			getClusterBaseInfo(clusterInfoDto, cluster);
+
 			String id = cluster.getString("id");
-			String name = cluster.getString("name");
-			JSONObject requested = cluster.getJSONObject("requested");
-			String pods = "0";
-			String status = "";
-			if (requested != null) {
-				pods = requested.getString("pods");
-			}
-			Integer runningPodNum = Integer.valueOf(pods);
-			String state = cluster.getString("state");
-			if (StringUtils.isNotBlank(state)) {
-				switch (state) {
+			getNodePodInfo(id, headers, clusterInfoDto);
+
+			list.add(clusterInfoDto);
+		});
+
+
+		return list;
+	}
+
+	private void getClusterBaseInfo(ClusterInfoDto clusterInfoDto, JSONObject cluster) {
+		String createdAt = cluster.getString("created");
+		String id = cluster.getString("id");
+		String name = cluster.getString("name");
+		JSONObject requested = cluster.getJSONObject("requested");
+		String pods = "0";
+		String status = "";
+		if (requested != null) {
+			pods = requested.getString("pods");
+		}
+		Integer runningPodNum = Integer.valueOf(pods);
+		String state = cluster.getString("state");
+		if (StringUtils.isNotBlank(state)) {
+			switch (state) {
 //					Uninitialized
 //				    Creating
 //					Running
 //					Abnormal
-					case "active":
-						status = "Running";
-				}
+				case "active":
+					status = "Running";
 			}
-			clusterInfoDto.setCreatedAt(createdAt);
-			clusterInfoDto.setId(id);
-			clusterInfoDto.setName(name);
-			clusterInfoDto.setRunningPodNum(runningPodNum);
-			clusterInfoDto.setStatus(status);
-
-			getNodePodInfo(id, headers, clusterInfoDto);
-		});
-
-
-		return result;
+		}
+		clusterInfoDto.setCreatedAt(createdAt);
+		clusterInfoDto.setId(id);
+		clusterInfoDto.setName(name);
+		clusterInfoDto.setRunningPodNum(runningPodNum);
+		clusterInfoDto.setStatus(status);
 	}
 
 	private void getNodePodInfo(String id, Map<String, String> headers, ClusterInfoDto clusterInfoDto) {
@@ -169,14 +174,15 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 				long createdTS = node.getLongValue("createdTS");
 				if(createdTS > tmp.longValue()) {
 					tmp.set(createdTS);
-//					updatedAt.setCharAt(0, node.getString("created"));
+					updatedAt.setLength(0);
+					updatedAt.append(node.getString("created"));
 				}
 			}
 		});
 		clusterInfoDto.setRunningNodeNum(runningNodeNum.get());
 		clusterInfoDto.setTotalNodeNum(totalNodeNum.get());
 		clusterInfoDto.setCidr(cidr.toString());
-//		clusterInfoDto.setUpdatedAt(updatedAt);
+		clusterInfoDto.setUpdatedAt(updatedAt.toString());
 	}
 
 	@Override
@@ -316,27 +322,13 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		data.stream().forEach(it -> {
 			JSONObject item = (JSONObject) it;
 			ipList.stream().forEach(ip -> {
-				if (ip.equalsIgnoreCase(item.getString("externalIpAddress")) ||
-						ip.equalsIgnoreCase(item.getString("ipAddress"))) {
+				if(ip.equalsIgnoreCase(item.getString("externalIpAddress")) ||
+					ip.equalsIgnoreCase(item.getString("ipAddress"))) {
 					String id = item.getString("id");
 					String removeNodeUrl = rancherServerPath.removeNodeUrl(id);
 					HttpClientUtil.doDelete(removeNodeUrl, headers);
 				}
 			});
 		});
-	}
-
-	public static void main (String[] args) {
-		Date dt = new Date();
-		dt.setTime(1554366423000L);
-		System.out.println(DateFormatUtils.format(dt, "yyyy-MM-dd HH:mm:ss,SSS"));
-		System.out.println("2019-04-04T08:24:10Z");
-
-
-		final StringBuilder tmp = new StringBuilder();
-		tmp.append("1234567890");
-		tmp.setLength(0);
-		tmp.append("dfghjkl");
-		System.out.println(tmp.toString());
 	}
 }

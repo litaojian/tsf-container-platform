@@ -5,6 +5,7 @@
 
 package com.tencent.tsf.container.service;
 
+import com.tencent.tsf.container.dto.ClusterInfoDto;
 import com.tencent.tsf.container.dto.ClusterVMDto;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public interface ClusterManagerService {
 
 	String getClusterById(Map<String, String> headers, String clusterId);
 
-	String getClusters(Map<String, String> headers, Map<String, Object> params);
+	List<ClusterInfoDto> getClusters(Map<String, String> headers, Map<String, Object> params);
 
 	String deleteClusterById(Map<String, String> headers, String clusterId);
 
