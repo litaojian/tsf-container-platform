@@ -10,9 +10,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.config.RancherKubernetesConfig;
 import com.tencent.tsf.container.config.RancherServerPath;
-import com.tencent.tsf.container.dto.ClusterInfoDto;
-import com.tencent.tsf.container.dto.ClusterNodeDto;
-import com.tencent.tsf.container.dto.ClusterVMDto;
+import com.tencent.tsf.container.dto.*;
 import com.tencent.tsf.container.models.Capacity;
 import com.tencent.tsf.container.models.ClusterInfo;
 import com.tencent.tsf.container.models.Limits;
@@ -26,6 +24,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.util.Base64Utils;
+import org.springframework.util.CollectionUtils;
+import org.yaml.snakeyaml.Yaml;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -331,4 +332,48 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 			});
 		});
 	}
+
+	@Override
+	public KubeAPIServerDto getKubernetesAPIServer(Map<String, String> headers, String clusterId) {
+		Assert.hasLength(clusterId, "kube-apiserver: 集群ID不能为空！");
+
+		KubeAPIServerDto kubeAPIServer = kubeConfigToBasicAuthentication(headers, clusterId);
+		String response = getClusterById(headers, clusterId);
+		JSONObject data = JSON.parseObject(response);
+		String address = data.getString("apiEndpoint");
+		kubeAPIServer.setAddress(address);
+		return kubeAPIServer;
+	}
+
+	private KubeAPIServerDto kubeConfigToBasicAuthentication(Map<String, String> headers, String clusterId) {
+		String kubeConfigUrl = rancherServerPath.kubeConfigUrl(clusterId);
+		String response = HttpClientUtil.doPost(kubeConfigUrl, headers);
+		JSONObject result = JSON.parseObject(response);
+		String config = result.getString("config");
+		Yaml yaml = new Yaml();
+		LinkedHashMap<String, Object> configData = yaml.loadAs(config, LinkedHashMap.class);
+		if(CollectionUtils.isEmpty(configData)) {
+			log.error("获取kubeConfig信息失败, 集群ID：{}", clusterId);
+			throw new RuntimeException("获取 kubeConfig信息失败！");
+		}
+		ArrayList<LinkedHashMap<String, Object>> users = (ArrayList<LinkedHashMap<String, Object>>) configData.get("users");
+		if(CollectionUtils.isEmpty(users)) {
+			log.error("获取kubeConfig user信息失败, 集群ID：{}", clusterId);
+			throw new RuntimeException("获取kubeConfig信息失败！");
+		}
+		LinkedHashMap userInfo = users.get(0);
+		String name = String.valueOf(userInfo.get("name"));
+		LinkedHashMap<String, Object> user = (LinkedHashMap<String, Object>) userInfo.get("user");
+		String token = String.valueOf(user.get("token"));
+		String[] tokens = token.split(":");
+		String basic = Base64Utils.encodeToString(String.format("%1$s:%2$s", name, tokens[1]).getBytes());
+//		String basic = Base64Utils.encodeToString(String.format(token).getBytes());
+
+		KubeAPIServerDto kubeAPIServer = new KubeAPIServerDto();
+		kubeAPIServer.setAddress("");
+		KubeAPIServerDto.Authorization authorization = kubeAPIServer.new Authorization(basic);
+		kubeAPIServer.setAuthorization(authorization);
+		return kubeAPIServer;
+	}
+
 }

@@ -70,6 +70,8 @@ public class HttpClientUtil {
 	//post请求设置参数
 	private static void setRequestParams(HttpPost httpPost, Map<String, Object> param)
 			throws UnsupportedEncodingException {
+		if(CollectionUtils.isEmpty(param)) return;
+
 		List<NameValuePair> list = new ArrayList<>();
 		Iterator iterator = param.entrySet().iterator();
 		while (iterator.hasNext()) {
@@ -97,6 +99,10 @@ public class HttpClientUtil {
 			log.error("", ex);
 		}
 		return StringUtils.EMPTY;
+	}
+
+	public static String doPost(String url, Map<String, String> headers) {
+		return doPost(url, headers, Collections.EMPTY_MAP);
 	}
 
 

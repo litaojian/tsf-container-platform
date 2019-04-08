@@ -14,3 +14,24 @@ container:
       access-token: rk4s4h4mq28dvcdcjt5k788wwb25xwtvvzwk8vwktzl567h99n5wf9
 #Authorization:  Basic dG9rZW4tYjU3cnM6cm1wbTdocnBndzh0d2NwbTc0djZnejl6Y3Zrem5wZnd2cmd6NXE0bTJrc203Nmc1OTR3dDgy
 #Authorization:  Basic dG9rZW4tcGxqd2Y6cms0czRoNG1xMjhkdmNkY2p0NWs3ODh3d2IyNXh3dHZ2endrOHZ3a3R6bDU2N2g5OW41d2Y5
+
+apiVersion: v1
+kind: Config
+clusters:
+- name: \"ethan001\"
+  cluster:
+    server: \"https://43.254.44.13/k8s/clusters/c-vnlq6\"
+    api-version: v1
+    certificate-authority-data: \"LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM3akNDQ      WRhZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFvTVJJd0VBWURWUVFLRXdsMGFHVXQKY      21GdVkyZ3hFakFRQmdOVkJBTVRDV05oZEhSc1pTMWpZVEFlRncweE9UQXpNekF3TnpReE16WmFGd      zB5T1RBegpNamN3TnpReE16WmFNQ2d4RWpBUUJnTlZCQW9UQ1hSb1pTMXlZVzVqYURFU01CQUdBM      VVFQXhNSlkyRjBkR3hsCkxXTmhNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ      0tDQVFFQTVHU3RCUXI1Z2k1bjFKaksKYncyUXZxdmxiOGFYTDlsRC9ORTRYWnRaMUdqOUgvWTFUM      1A1dXZLVU1ZWW4wMWU2RXdpMTBCWGxJRFg1RkQwYQpFWjJQQU1HcEs4d2QzaGlIam5RQ29lZFE0L      3J2VWs1dVlrWUo2UGVwZG5xc0xkUGtBUlRkdjdqYkxFVlRtb0JVCjhxQ0l6T2tPaWtNTE51VFIrW      FQwVWJpTlpBTCtIQ2l2UVFjcEExVEszU2VUbnp0MTNtaWRkTGMrQnExQXJzUHYKcFdmUFJBdW1QU      UVVNEJkcWFITzdJZ0tpRk1uRDd1QlZyRUhqYVZRTVdSVUhHdU1QbXBUa2lMVHNRNno0SHpHRQpSa      DlTZ1RZMll0dE9BR3FVOUhaNmtrNG9BWlYrOVk5d1FYeUNSY1h5WWFRblJldjBCR0l0MnJJQmpIQ      3JMcHR2ClA3SUJVd0lEQVFBQm95TXdJVEFPQmdOVkhROEJBZjhFQkFNQ0FxUXdEd1lEVlIwVEFRS      C9CQVV3QXdFQi96QU4KQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBY0FRR0dHWEF4eEc0NzIxaytpb      jZZVVY0RFgrUy9xUktGWk5keC90TwovVGpmdVkraDlGRkttYTNxNWhSZk84bkl3OXFhcnhUS3piN      0ltdllpUFE1T2tYYm1adXN3SFhGNHpoNWVjVUpOCllJcDZUTWttUGcwcmdSQnNsL3FCbEZNUW1nb      E92enJENkRHLzFjRzhMc0RCNUg4TVcxWVBNS2ZmcnUzLzFNaGoKMDVzeXQ1c0FWNHZFM1Vkc3lEZ      UZJQk9rczZ6Mi9QTXRJN1dUOFVpWUtpU0FMa0JxcGJLZ0dQRHYvWm4vcFJlSQpSMFF4L2tPMHhtZ      WNvb3hRbUhWS3REbzNua0llcUU3QXkxdFE5MjVrbVNoYUY3QmlsdDFjbEN0UVcrWjY0VkxzCkRvV      Fp4aHJNdlFUa1IvbHFjbG1pYkVhMGF6aC96OXJQTjBySHB3TDc0QzNSY3c9PQotLS0tLUVORCBDR      VJUSUZJQ0FURS0tLS0t\"
+users:
+- name: \"user-zfndn\"
+  user:
+    token: \"kubeconfig-user-zfndn:czgr7bdwtvs94ffdrxbfzxn4dzpjnrjggk4hrfkkjtx76b7sspw2j4\"
+- xxxx: sss
+contexts:
+- name: \"ethan001\"
+  context:
+    user: \"user-zfndn\"
+    cluster: \"ethan001\"
+
+current-context: \"ethan001\"

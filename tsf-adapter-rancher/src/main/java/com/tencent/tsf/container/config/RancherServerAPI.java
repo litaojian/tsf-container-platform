@@ -18,7 +18,7 @@ public class RancherServerAPI {
 	/** 创建集群 **/
 	public static String RANCHER_CREATE_CLUSTER         = "/cluster";
 	/** 获取单个集群信息 **/
-	public static String RANCHER_GET_THE_CLUSTER_INFO   = "/clusters?id_eq=%1$s";
+	public static String RANCHER_GET_THE_CLUSTER_INFO   = "/clusters/%1$s"; //"/clusters?id_eq=%1$s";
 	/** 获取集群列表 **/
 	public static String RANCHER_GET_ALL_CLUSTERS       = "/clusters";
 	/** 删除集群 **/
@@ -37,5 +37,7 @@ public class RancherServerAPI {
 	public static String RANCHER_DELETE_NAMESPACE       = "/cluster/%1$s/namespaces/%2$s";
 	/** 删除节点 **/
 	public static String RANCHER_DELETE_NODE            = "/nodes/%1$s";
+
+	public static String RANCHER_KUBE_CONFIG            = "/clusters/%1$s?action=generateKubeconfig";
 
 }

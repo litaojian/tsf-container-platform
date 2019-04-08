@@ -206,4 +206,12 @@ public class RancherServerPath {
 		return String.format(urlBuilder.toString(), nodeId);
 	}
 
+	public String kubeConfigUrl(String clusterId) {
+		Assert.hasLength(clusterId, "集群ID不能为空!");
+		StringBuilder urlBuilder = new StringBuilder();
+		urlBuilder.append(rancherConfiguration.getEndpoint())
+				.append(RancherServerAPI.RANCHER_KUBE_CONFIG);
+		return String.format(urlBuilder.toString(), clusterId);
+
+	}
 }

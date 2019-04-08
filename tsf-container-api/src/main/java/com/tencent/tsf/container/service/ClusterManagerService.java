@@ -7,6 +7,7 @@ package com.tencent.tsf.container.service;
 
 import com.tencent.tsf.container.dto.ClusterInfoDto;
 import com.tencent.tsf.container.dto.ClusterVMDto;
+import com.tencent.tsf.container.dto.KubeAPIServerDto;
 
 import java.util.List;
 import java.util.Map;
@@ -38,4 +39,6 @@ public interface ClusterManagerService {
 	void addNodes(Map<String, String> headers, List<ClusterVMDto> nodes);
 
 	void removeNodes(Map<String, String> headers, String clusterId, List<String> ipList);
+
+	KubeAPIServerDto getKubernetesAPIServer(Map<String, String> headers, String clusterId);
 }
