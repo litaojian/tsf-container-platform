@@ -57,6 +57,13 @@ public class BaseController {
 		return result;
 	}
 
+	protected BaseResponse createSuccessResult(){
+		BaseResponse result = new BaseResponse();
+		result.setCode(0);
+		result.setMessage("");
+		return result;
+	}
+
 	protected Map<String, Object> getRequestParams(HttpServletRequest request) {
 		if(request == null) return Collections.EMPTY_MAP;
 		Enumeration<String> paramNames = request.getParameterNames();

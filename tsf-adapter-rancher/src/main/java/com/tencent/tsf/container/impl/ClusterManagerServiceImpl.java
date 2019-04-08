@@ -66,7 +66,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		String result = HttpClientUtil.doPost(url, headers, param);
 		JSONObject obj = JSON.parseObject(result);
 		String id = obj.getString("id");
-		return "{\"id\": " + id + "}";
+		return "{\"id\": \"" + id + "\"}";
 	}
 
 	private String createClusterDefaultParam(String name, RancherKubernetesConfig config) {
@@ -177,32 +177,8 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		Assert.hasLength(clusterId, "获取集群节点列表：集群ID不能为空！");
 		String clusterNodeUrl = rancherServerPath.clusterNodeUrl(clusterId);
 		String response = HttpClientUtil.doGet(clusterNodeUrl, headers);
-		JSONObject obj = JSON.parseObject(response);
-		JSONArray data = (JSONArray) obj.get("data");
-		if (data == null || data.size() == 0) {
-			log.info("集群节点列表为空，集群ID：{}", clusterId);
-			return StringUtils.EMPTY;
-		}
-		List<ClusterNodeDto> list = new ArrayList<>();
-		data.stream().forEach(it -> {
-			if(Boolean.TRUE.equals(((JSONObject) it).get("worker"))) {
-				JSONObject item = (JSONObject) it;
-				ClusterNodeDto info = JSON.parseObject(JSON.toJSONString(it), ClusterNodeDto.class);
-				info.setCpuLimit(null); //TODO 需获取pod信息 计算得出
-				info.setCpuRequest(null);
-				info.setCpuTotal(null);
-				info.setMemLimit(null);
-				info.setMemRequest(null);
-				info.setMemTotal(null);
-				info.setWanIp(item.getString("externalIpAddress"));
-				info.setLanIp(item.getString("ipAddress"));
-				info.setStatus(item.getString("state"));
-				info.setCreatedAt(item.getString("created"));
-				info.setUpdatedAt(null);
-			}
-		});
 
-		return JSON.toJSONString(list);
+		return response;
 	}
 
 	@Override

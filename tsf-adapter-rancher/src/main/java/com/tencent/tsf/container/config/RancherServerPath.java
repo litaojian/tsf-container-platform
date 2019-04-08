@@ -118,6 +118,12 @@ public class RancherServerPath {
 		return String.format(urlBuilder.toString(), clusterId);
 	}
 
+	/**
+	 * 删除命名空间 URL
+	 * @param clusterId
+	 * @param namespaceId
+	 * @return
+	 */
 	public String deleteNamespaceUrl(String clusterId, String namespaceId){
 		Assert.hasLength(clusterId, "集群ID不能为空！");
 		Assert.hasLength(namespaceId, "命名空间ID不能为空！");

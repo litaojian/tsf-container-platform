@@ -78,6 +78,7 @@ public class NamespacesController extends BaseController {
                     "</ul>" +
                     "返回参数描述：<br/>", response = BaseResponse.class)
     public BaseResponse getNamespaces(@PathVariable("clusterId") String clusterId, HttpServletRequest request){
+        log.info("-> 获取集群列表");
         Map<String, String> headers = getCustomHeaders(request);
         Map<String, Object> params = getRequestParams(request);
         String data = namespaceManagerService.getNamespaces(headers, params, clusterId);
@@ -101,7 +102,7 @@ public class NamespacesController extends BaseController {
 
         resultMap.put("totalCount", namespaceList.size());
         resultMap.put("content", namespaceList);
-        log.info("---- namespaces gotten, resultMap: {}", resultMap);
+        log.debug("---- namespaces gotten, resultMap: {}", resultMap);
         return createSuccessResult(resultMap);
     }
 
