@@ -67,6 +67,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		String result = HttpClientUtil.doPost(url, headers, param);
 		JSONObject obj = JSON.parseObject(result);
 		String id = obj.getString("id");
+		return "{\"id\": \"" + id + "\"}";
 		return id;
 	}
 
@@ -286,7 +287,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 			}
 		});
 
-		return JSON.toJSONString(list);
+		return response;
 	}
 
 	@Override

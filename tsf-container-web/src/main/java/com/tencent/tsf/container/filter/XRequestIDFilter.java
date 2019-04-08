@@ -5,6 +5,7 @@
 
 package com.tencent.tsf.container.filter;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -31,10 +32,11 @@ public class XRequestIDFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 		String xRequestId = request.getHeader("X-Request-ID");
-		filterChain.doFilter(servletRequest, servletResponse);
 		if(StringUtils.isNotBlank(xRequestId)) {
 			response.setHeader("X-Request-ID", xRequestId);
 		}
+		filterChain.doFilter(servletRequest, servletResponse);
+
 	}
 
 	@Override

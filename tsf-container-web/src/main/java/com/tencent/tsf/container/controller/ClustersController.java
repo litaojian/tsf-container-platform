@@ -7,12 +7,17 @@ package com.tencent.tsf.container.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.dto.BaseResponse;
+import com.tencent.tsf.container.dto.ClusterDTO;
+import com.tencent.tsf.container.dto.ClusterNodeDto;
 import com.tencent.tsf.container.dto.ClusterVMDto;
 import com.tencent.tsf.container.service.ClusterManagerService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,6 +61,8 @@ public class ClustersController extends BaseController{
 		JSONObject map = new JSONObject();
 		map.put("id", data);
 		return createSuccessResult(map);
+
+		return createSuccessResult(JSON.parseObject(data));
 	}
 
 	@GetMapping("/{clusterId}")
@@ -89,10 +96,43 @@ public class ClustersController extends BaseController{
 		Map<String, String> headers = getCustomHeaders(request);
 		Map<String, Object> params = getRequestParams(request);
 		String data = clusterManagerService.getClusters(headers, params);
+		JSONObject jsonObject = JSON.parseObject(data);
+		JSONArray jsonArray = jsonObject.getJSONArray("data");
+		List<ClusterDTO> clusterDTOS = new ArrayList<>();
+		jsonArray.forEach(it -> {
+			JSONObject item = (JSONObject) it;
+			String clusterId = item.getString("id");
+			String nodesData = clusterManagerService.clusterNodes(headers, clusterId);
+			JSONObject obj = JSON.parseObject(nodesData);
+			JSONArray array = obj.getJSONArray("data");
+			int runningNodeNum = 0;
+			int runningPodNum = 0;
+			for (Object o : array) {
+				JSONObject node =  (JSONObject) o;
+				String state = node.getString("state");
+				if ("active".equals(state)){
+					runningNodeNum ++;
+				}
+				JSONObject requested = node.getJSONObject("requested");
+				runningPodNum += requested.getInteger("pods");
+			}
+			ClusterDTO clusterDTO = new ClusterDTO();
+			clusterDTO.setId(clusterId);
+			clusterDTO.setName(item.getString("name"));
+			clusterDTO.setStatus(item.getString("state"));
+			clusterDTO.setCreatedAt(item.getString("created"));
+			clusterDTO.setTotalNodeNum(array.size());
+			clusterDTO.setRunningNodeNum(runningNodeNum);
+			clusterDTO.setRunningPodNum(runningPodNum);
+			clusterDTOS.add(clusterDTO);
+		});
+		Map<String, Object> map = new HashMap<>();
+		map.put("totalCount", clusterDTOS.size());
+		map.put("content", clusterDTOS);
 
 		log.debug("clusters gotten, data: {}", data);
 
-		return createSuccessResult(data);
+		return createSuccessResult(map);
 	}
 
 
@@ -226,8 +266,33 @@ public class ClustersController extends BaseController{
 		log.info("获取集群 node 节点信息, 集群ID: {}", clusterId);
 
 		Map<String, String> headers = getCustomHeaders(request);
-		String data = clusterManagerService.clusterNodes(headers, clusterId);
+		String response = clusterManagerService.clusterNodes(headers, clusterId);
+		JSONObject obj = JSON.parseObject(response);
+		JSONArray data = (JSONArray) obj.get("data");
+		if (data == null || data.size() == 0) {
+			log.info("集群节点列表为空，集群ID：{}", clusterId);
+			return createSuccessResult(StringUtils.EMPTY);
+		}
+		List<ClusterNodeDto> list = new ArrayList<>();
+		data.stream().forEach(it -> {
+			if(Boolean.TRUE.equals(((JSONObject) it).get("worker"))) {
+				JSONObject item = (JSONObject) it;
+				ClusterNodeDto info = JSON.parseObject(JSON.toJSONString(it), ClusterNodeDto.class);
+				info.setCpuLimit(null); //TODO 需获取pod信息 计算得出
+				info.setCpuRequest(null);
+				info.setCpuTotal(null);
+				info.setMemLimit(null);
+				info.setMemRequest(null);
+				info.setMemTotal(null);
+				info.setWanIp(item.getString("externalIpAddress"));
+				info.setLanIp(item.getString("ipAddress"));
+				info.setStatus(item.getString("state"));
+				info.setCreatedAt(item.getString("created"));
+				info.setUpdatedAt(null);
+			}
+		});
+
 		log.debug("nodes info, result: {}", data);
-		return createSuccessResult(data);
+		return createSuccessResult(JSON.toJSONString(list));
 	}
 }
