@@ -1,3 +1,6 @@
 spring:
   application:
     name: tsf-adapter-rancher
+logging:
+  level:
+    root: INFO

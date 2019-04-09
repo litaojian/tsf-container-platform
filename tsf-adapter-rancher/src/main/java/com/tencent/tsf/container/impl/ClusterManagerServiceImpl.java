@@ -18,6 +18,10 @@ import com.tencent.tsf.container.models.Requested;
 import com.tencent.tsf.container.service.ClusterManagerService;
 import com.tencent.tsf.container.utils.HttpClientUtil;
 import com.tencent.tsf.container.utils.SSHHelper;
+import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.ConfigBuilder;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -81,12 +85,21 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	}
 
 	@Override
-	public String getClusterById(Map<String, String> headers, String clusterId) {
+	public ClusterInfoDto getClusterById(Map<String, String> headers, String clusterId) {
 		Assert.hasLength(clusterId, "集群ID不能为空！");
 
 		String url = rancherServerPath.clusterInfoUrl(clusterId);
 		String result = HttpClientUtil.doGet(url, headers);
-		return result;
+
+		ClusterInfoDto clusterInfoDto = new ClusterInfoDto();
+
+		JSONObject cluster = JSON.parseObject(result);
+		getClusterBaseInfo(clusterInfoDto, cluster);
+
+		String id = cluster.getString("id");
+		getNodePodInfo(id, headers, clusterInfoDto);
+
+		return clusterInfoDto;
 	}
 
 	@Override
@@ -129,14 +142,18 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		}
 		Integer runningPodNum = Integer.valueOf(pods);
 		String state = cluster.getString("state");
-		if (StringUtils.isNotBlank(state)) {
-			switch (state) {
 //					Uninitialized
 //				    Creating
 //					Running
 //					Abnormal
+		if (StringUtils.isNotBlank(state)) {
+			switch (state) {
+				case "provisioning":
+					status = "Uninitialized";
+					break;
 				case "active":
 					status = "Running";
+					break;
 			}
 		}
 		clusterInfoDto.setCreatedAt(createdAt);
@@ -264,7 +281,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	}
 
 	@Override
-	public String clusterNodes(Map<String, String> headers, String clusterId) {
+	public List<ClusterNodeDto> clusterNodes(Map<String, String> headers, String clusterId) {
 		Assert.hasLength(clusterId, "获取集群节点列表：集群ID不能为空！");
 		String clusterNodeUrl = rancherServerPath.clusterNodeUrl(clusterId);
 		String response = HttpClientUtil.doGet(clusterNodeUrl, headers);
@@ -272,7 +289,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		JSONArray data = (JSONArray) obj.get("data");
 		if (data == null || data.size() == 0) {
 			log.info("集群节点列表为空，集群ID：{}", clusterId);
-			return StringUtils.EMPTY;
+			return Collections.EMPTY_LIST;
 		}
 		List<ClusterNodeDto> list = new ArrayList<>();
 		data.stream().forEach(it -> {
@@ -294,7 +311,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 			}
 		});
 
-		return response;
+		return list;
 	}
 
 	@Override
@@ -338,7 +355,10 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		Assert.hasLength(clusterId, "kube-apiserver: 集群ID不能为空！");
 
 		KubeAPIServerDto kubeAPIServer = kubeConfigToBasicAuthentication(headers, clusterId);
-		String response = getClusterById(headers, clusterId);
+
+		String url = rancherServerPath.clusterInfoUrl(clusterId);
+		String response = HttpClientUtil.doGet(url, headers);
+
 		JSONObject data = JSON.parseObject(response);
 		String address = data.getString("apiEndpoint");
 		kubeAPIServer.setAddress(address);

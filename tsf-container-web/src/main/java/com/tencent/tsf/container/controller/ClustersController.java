@@ -8,10 +8,7 @@ package com.tencent.tsf.container.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.tencent.tsf.container.dto.BaseResponse;
-import com.tencent.tsf.container.dto.ClusterInfoDto;
-import com.tencent.tsf.container.dto.ClusterNodeDto;
-import com.tencent.tsf.container.dto.ClusterVMDto;
+import com.tencent.tsf.container.dto.*;
 import com.tencent.tsf.container.service.ClusterManagerService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -73,7 +70,7 @@ public class ClustersController extends BaseController {
 		log.info("查询单个集群信息, 集群ID: {}", clusterId);
 
 		Map<String, String> headers = getCustomHeaders(request);
-		String result = clusterManagerService.getClusterById(headers, clusterId);
+		ClusterInfoDto result = clusterManagerService.getClusterById(headers, clusterId);
 		log.debug("查询单个集群信息 -> ", result);
 		return createSuccessResult(result);
 	}
@@ -206,7 +203,7 @@ public class ClustersController extends BaseController {
 					"}], 必填</li>" +
 					"</ul>" +
 					"返回参数描述<p></p>", response = BaseResponse.class)
-	public String removeNodes(HttpServletRequest request,
+	public BaseResponse removeNodes(HttpServletRequest request,
 	                          @PathVariable("clusterId") String clusterId,
 	                          @RequestBody Map<String, List<Map<String, String>>> params) {
 		log.info("将 node 节点从 Kubernetes 集群中移除, 集群ID: {}, ips: {}", clusterId, JSON.toJSONString(params));
@@ -216,7 +213,7 @@ public class ClustersController extends BaseController {
 		final List<String> ipList = new ArrayList<>();
 		ipMap.stream().forEach(it -> ipList.add(it.get("ip")));
 		clusterManagerService.removeNodes(headers, clusterId, ipList);
-		return "";
+		return createSuccessResult("{}");
 	}
 
 	@GetMapping("/{clusterId}/nodes")
@@ -232,33 +229,29 @@ public class ClustersController extends BaseController {
 		log.info("获取集群 node 节点信息, 集群ID: {}", clusterId);
 
 		Map<String, String> headers = getCustomHeaders(request);
-		String response = clusterManagerService.clusterNodes(headers, clusterId);
-		JSONObject obj = JSON.parseObject(response);
-		JSONArray data = (JSONArray) obj.get("data");
-		if (data == null || data.size() == 0) {
-			log.info("集群节点列表为空，集群ID：{}", clusterId);
-			return createSuccessResult(StringUtils.EMPTY);
-		}
-		List<ClusterNodeDto> list = new ArrayList<>();
-		data.stream().forEach(it -> {
-			if (Boolean.TRUE.equals(((JSONObject) it).get("worker"))) {
-				JSONObject item = (JSONObject) it;
-				ClusterNodeDto info = JSON.parseObject(JSON.toJSONString(it), ClusterNodeDto.class);
-				info.setCpuLimit(null); //TODO 需获取pod信息 计算得出
-				info.setCpuRequest(null);
-				info.setCpuTotal(null);
-				info.setMemLimit(null);
-				info.setMemRequest(null);
-				info.setMemTotal(null);
-				info.setWanIp(item.getString("externalIpAddress"));
-				info.setLanIp(item.getString("ipAddress"));
-				info.setStatus(item.getString("state"));
-				info.setCreatedAt(item.getString("created"));
-				info.setUpdatedAt(null);
-			}
-		});
+		List<ClusterNodeDto> list = clusterManagerService.clusterNodes(headers, clusterId);
 
-		log.debug("nodes info, result: {}", data);
-		return createSuccessResult(JSON.toJSONString(list));
+		log.debug("nodes info, result: {}", JSON.toJSONString(list));
+		return createSuccessResult(list);
 	}
+
+	@GetMapping("/{clusterId}/apiServer")
+	@ApiOperation(value = "获取集群的 Kubernetes API Server 地址", httpMethod = "GET",
+			notes = "获取集群的 Kubernetes API Server 地址" +
+					"请求参数描述：" +
+					"<ul>" +
+					"<li>URI参数: clusterId——集群ID，必填</li>" +
+					"</ul>" +
+					"返回参数描述<p></p>", response = BaseResponse.class)
+	public BaseResponse kubeAPIServver(HttpServletRequest request,
+	                          @PathVariable("clusterId") String clusterId) {
+		log.info("获取集群的 Kubernetes API Server 地址, 集群ID: {}", clusterId);
+
+		Map<String, String> headers = getCustomHeaders(request);
+		KubeAPIServerDto kubeAPIServer = clusterManagerService.getKubernetesAPIServer(headers, clusterId);
+
+		log.debug("nodes info, result: {}", JSON.toJSONString(kubeAPIServer));
+		return createSuccessResult(kubeAPIServer);
+	}
+
 }

@@ -6,6 +6,7 @@
 package com.tencent.tsf.container.service;
 
 import com.tencent.tsf.container.dto.ClusterInfoDto;
+import com.tencent.tsf.container.dto.ClusterNodeDto;
 import com.tencent.tsf.container.dto.ClusterVMDto;
 import com.tencent.tsf.container.dto.KubeAPIServerDto;
 
@@ -24,7 +25,7 @@ public interface ClusterManagerService {
 
 	String createCluster(Map<String, String> headers, String name);
 
-	String getClusterById(Map<String, String> headers, String clusterId);
+	ClusterInfoDto getClusterById(Map<String, String> headers, String clusterId);
 
 	List<ClusterInfoDto> getClusters(Map<String, String> headers, Map<String, Object> params);
 
@@ -34,7 +35,7 @@ public interface ClusterManagerService {
 
 	void setMasterNode(Map<String, String> headers, List<ClusterVMDto> masterNodes);
 
-	String clusterNodes(Map<String, String> headers, String clusterId);
+	List<ClusterNodeDto> clusterNodes(Map<String, String> headers, String clusterId);
 
 	void addNodes(Map<String, String> headers, List<ClusterVMDto> nodes);
 
