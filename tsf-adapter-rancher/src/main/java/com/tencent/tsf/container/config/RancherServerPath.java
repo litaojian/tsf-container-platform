@@ -214,4 +214,72 @@ public class RancherServerPath {
 		return String.format(urlBuilder.toString(), clusterId);
 
 	}
+
+//	public String getAllProjectsUrl(){
+//		StringBuilder urlBuilder = new StringBuilder();
+//		urlBuilder.append(rancherConfiguration.getEndpoint())
+//				.append(RancherServerAPI.RANCHER_GET_ALL_PROJECTS);
+//		return urlBuilder.toString();
+//	}
+//
+//	/**
+//	 * 创建镜像仓库 URL
+//	 * @param projectId
+//	 * @return
+//	 */
+//	public String createRepositoryUrl(String projectId){
+//		Assert.hasLength(projectId, "项目ID不能为空!");
+//		StringBuilder urlBuilder = new StringBuilder();
+//		urlBuilder.append(rancherConfiguration.getEndpoint())
+//				.append(RancherServerAPI.RANCHER_CREATE_REPOSITORIES);
+//		return String.format(urlBuilder.toString(), projectId);
+//	}
+//
+//	/**
+//	 * 获取镜像仓库信息 URL
+//	 * @param projectId
+//	 * @param repositoryId
+//	 * @return
+//	 */
+//	public String repositoryInfoUrl(String projectId, String repositoryId){
+//		Assert.hasLength(projectId, "项目ID不能为空!");
+//		Assert.hasLength(repositoryId, "仓库ID不能为空!");
+//		StringBuilder urlBuilder = new StringBuilder();
+//		urlBuilder.append(rancherConfiguration.getEndpoint())
+//				.append(RancherServerAPI.RANCHER_GET_REPOSITORY);
+//		return String.format(urlBuilder.toString(), projectId, repositoryId);
+//	}
+//
+//	/**
+//	 * 删除镜像仓库 URL
+//	 * @param projectId
+//	 * @param repositoryId
+//	 * @return
+//	 */
+//	public String deleteRepositoryUrl(String projectId, String repositoryId){
+//		Assert.hasLength(projectId, "项目ID不能为空!");
+//		Assert.hasLength(repositoryId, "仓库ID不能为空!");
+//		StringBuilder urlBuilder = new StringBuilder();
+//		urlBuilder.append(rancherConfiguration.getEndpoint())
+//				.append(RancherServerAPI.RANCHER_DELETE_REPOSITORY);
+//		return String.format(urlBuilder.toString(), projectId, repositoryId);
+//	}
+//
+//	/**
+//	 * 获取所有镜像仓库
+//	 * @param projectId
+//	 * @return
+//	 */
+//	public String getAllRepositoriesUrl(String projectId, final Map<String, Object> params){
+//		Assert.hasLength(projectId, "项目ID不能为空!");
+//		StringBuilder urlBuilder = new StringBuilder();
+//		urlBuilder.append(rancherConfiguration.getEndpoint())
+//				.append(RancherServerAPI.RANCHER_GET_ALL_REPOSITORIES);
+//		String paramUrl = assembleGetMethodParams(params);
+//		if (StringUtils.isNotBlank(paramUrl)) {
+//			urlBuilder.append("?")
+//					.append(paramUrl);
+//		}
+//		return String.format(urlBuilder.toString(), projectId);
+//	}
 }

@@ -134,7 +134,7 @@ public class ClustersController extends BaseController {
 		Map<String, String> headers = getCustomHeaders(request);
 		String data = clusterManagerService.clusterUsage(headers, clusterId);
 		log.debug("cluster usage, result -> {}", data);
-		return createSuccessResult(data);
+		return createSuccessResult(JSON.parseObject(data));
 	}
 
 

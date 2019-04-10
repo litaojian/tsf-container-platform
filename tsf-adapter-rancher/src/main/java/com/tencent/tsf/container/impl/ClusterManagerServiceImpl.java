@@ -11,11 +11,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.config.RancherKubernetesConfig;
 import com.tencent.tsf.container.config.RancherServerPath;
 import com.tencent.tsf.container.dto.*;
-import com.tencent.tsf.container.models.Capacity;
-import com.tencent.tsf.container.models.ClusterInfo;
-import com.tencent.tsf.container.models.Limits;
-import com.tencent.tsf.container.models.Requested;
+import com.tencent.tsf.container.models.*;
 import com.tencent.tsf.container.service.ClusterManagerService;
+import com.tencent.tsf.container.utils.ExecResult;
 import com.tencent.tsf.container.utils.HttpClientUtil;
 import com.tencent.tsf.container.utils.SSHHelper;
 import io.fabric8.kubernetes.client.Config;
@@ -231,10 +229,11 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		String clusterId = masterNode.getClusterId();
 		String basicCommand = requestAddNodeSSH(headers, clusterId);
 		final String command = basicCommand + NODE_ROLE_MASTER;
-
-		masterNodes.stream().forEach(it ->
-				SSHHelper.execCommand(command, it)
-		);
+		log.debug("执行脚本，脚本信息 command: {}", command);
+		masterNodes.stream().forEach(it ->{
+			ExecResult execResult = SSHHelper.execCommand(command, it);
+			log.debug("执行脚本，返回结果 ExecResult: {}", JSON.toJSONString(execResult));
+		});
 
 	}
 
@@ -253,11 +252,12 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	}
 
 	private String conversionToClusterUsage(String result) {
-		JSONObject obj = JSON.parseObject(result);
-		JSONArray arr = (JSONArray) obj.get("data");
-		if (arr == null || arr.size() == 0)
-			return StringUtils.EMPTY;
-		ClusterInfo clusterInfo = JSON.parseObject(arr.get(0).toString(), ClusterInfo.class);
+//		JSONObject obj = JSON.parseObject(result);
+//		JSONArray arr = (JSONArray) obj.get("data");
+//		if (arr == null || arr.size() == 0)
+//			return StringUtils.EMPTY;
+//		ClusterInfo clusterInfo = JSON.parseObject(arr.get(0).toString(), ClusterInfo.class);
+		ClusterInfo clusterInfo = JSON.parseObject(result, ClusterInfo.class);
 		if (clusterInfo == null) {
 			return StringUtils.EMPTY;
 		}
@@ -296,12 +296,31 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 			if (Boolean.TRUE.equals(((JSONObject) it).get("worker"))) {
 				JSONObject item = (JSONObject) it;
 				ClusterNodeDto info = JSON.parseObject(JSON.toJSONString(it), ClusterNodeDto.class);
-				info.setCpuLimit(null); //TODO 需获取pod信息 计算得出
-				info.setCpuRequest(null);
-				info.setCpuTotal(null);
-				info.setMemLimit(null);
-				info.setMemRequest(null);
-				info.setMemTotal(null);
+
+				Allocatable allocatable = item.getObject("allocatable", Allocatable.class);
+				Requested requested = item.getObject("requested", Requested.class);
+				Limits limits = item.getObject("limits", Limits.class);
+				if (limits == null) {
+					limits = new Limits();
+					limits.setCpu("0m");
+					limits.setMemory("0Mi");
+				}else if (!item.getJSONObject("limits").containsKey("cpu")){
+					limits.setCpu("0m");
+				}
+
+				Float cpuLimit = getFloat(limits.getCpu(), 1)/1000;
+				Float cpuRequest = getFloat(requested.getCpu(), 1)/1000;
+				Float cpuTotal = getFloat(allocatable.getCpu(), 0);
+				Float memLimit = getFloat(limits.getMemory(), 2)/1024;
+				Float memRequest = getFloat(requested.getMemory(), 2)/1024;
+				Float memTotal = getFloat(allocatable.getMemory(), 2)/1024/1024;
+
+				info.setCpuLimit(cpuLimit);
+				info.setCpuRequest(cpuRequest);
+				info.setCpuTotal(cpuTotal);
+				info.setMemLimit(memLimit);
+				info.setMemRequest(memRequest);
+				info.setMemTotal(memTotal);
 				info.setWanIp(item.getString("externalIpAddress"));
 				info.setLanIp(item.getString("ipAddress"));
 				info.setStatus(item.getString("state"));
@@ -312,6 +331,11 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		});
 
 		return list;
+	}
+
+	public Float getFloat(String str, Integer endNum){
+		String number = str.substring(0, str.length()-endNum);
+		return Float.parseFloat(number);
 	}
 
 	@Override

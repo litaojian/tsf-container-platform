@@ -3,7 +3,7 @@ package com.tencent.tsf.container.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.dto.BaseResponse;
-import com.tencent.tsf.container.dto.NamespaceDTO;
+import com.tencent.tsf.container.dto.NamespaceDto;
 import com.tencent.tsf.container.service.NamespaceManagerService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,15 +35,20 @@ public class NamespacesController extends BaseController {
                     "<li>name：命名空间名称（String），必填</li>" +
                     "</ul>" +
                     "返回参数描述：<br/>", response = BaseResponse.class)
-    public BaseResponse createNamespace(@PathVariable("clusterId") String clusterId, @RequestParam("name")String name, HttpServletRequest request){
+    public BaseResponse createNamespace(@PathVariable("clusterId") String clusterId, @RequestBody Map<String, Object> requestMap, HttpServletRequest request){
         Map<String, String> headers = getCustomHeaders(request);
+        String name = requestMap.get("name").toString();
 
         String data = namespaceManagerService.createNamespace(headers, clusterId, name);
         JSONObject jsonObject = JSON.parseObject(data);
+        log.debug("---- createNamespace gotten, data: {}", jsonObject);
+        if (jsonObject.containsKey("status")){
+            return createErrorResult(jsonObject.getInteger("status"), jsonObject.getString("message"));
+        }
         String id = jsonObject.get("id").toString();
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("id",id );
-        log.info("---- createNamespace gotten, data: {}", jsonObject);
+
         return createSuccessResult(resultMap);
     }
 
@@ -60,7 +65,7 @@ public class NamespacesController extends BaseController {
         Map<String, String> headers = getCustomHeaders(request);
         String data = namespaceManagerService.getNamespaceById(headers, clusterId, namespaceId);
         JSONObject jsonObject = JSON.parseObject(data);
-        NamespaceDTO namespaceDTO = new NamespaceDTO();
+        NamespaceDto namespaceDTO = new NamespaceDto();
         namespaceDTO.setId(jsonObject.get("id").toString());
         namespaceDTO.setName(jsonObject.get("name").toString());
         namespaceDTO.setStatus(jsonObject.get("state").toString());
@@ -78,7 +83,7 @@ public class NamespacesController extends BaseController {
                     "</ul>" +
                     "返回参数描述：<br/>", response = BaseResponse.class)
     public BaseResponse getNamespaces(@PathVariable("clusterId") String clusterId, HttpServletRequest request){
-        log.info("-> 获取集群列表");
+        log.info("-> 获取命名空间列表");
         Map<String, String> headers = getCustomHeaders(request);
         Map<String, Object> params = getRequestParams(request);
         String data = namespaceManagerService.getNamespaces(headers, params, clusterId);
@@ -90,9 +95,9 @@ public class NamespacesController extends BaseController {
             return createSuccessResult(resultMap);
         }
         List<Map<String, Object>> dataList = (List) jsonObject.get("data");
-        List<NamespaceDTO> namespaceList = new ArrayList<>();
+        List<NamespaceDto> namespaceList = new ArrayList<>();
         dataList.forEach(map -> {
-            NamespaceDTO namespaceDTO = new NamespaceDTO();
+            NamespaceDto namespaceDTO = new NamespaceDto();
             namespaceDTO.setId(map.get("id").toString());
             namespaceDTO.setName(map.get("name").toString());
             namespaceDTO.setStatus(map.get("state").toString());
