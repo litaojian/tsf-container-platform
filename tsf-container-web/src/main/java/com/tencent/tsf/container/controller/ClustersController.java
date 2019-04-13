@@ -5,11 +5,13 @@
 
 package com.tencent.tsf.container.controller;
 
+import ch.ethz.ssh2.Connection;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.tencent.tsf.container.dto.*;
 import com.tencent.tsf.container.service.ClusterManagerService;
+import com.tencent.tsf.container.utils.RemoteCommandUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -230,9 +232,12 @@ public class ClustersController extends BaseController {
 
 		Map<String, String> headers = getCustomHeaders(request);
 		List<ClusterNodeDto> list = clusterManagerService.clusterNodes(headers, clusterId);
+		Map<String, Object> map = new HashMap<>();
+		map.put("totalCount", list.size());
+		map.put("content", list);
 
 		log.debug("nodes info, result: {}", JSON.toJSONString(list));
-		return createSuccessResult(list);
+		return createSuccessResult(map);
 	}
 
 	@GetMapping("/{clusterId}/apiServer")
@@ -252,6 +257,14 @@ public class ClustersController extends BaseController {
 
 		log.debug("nodes info, result: {}", JSON.toJSONString(kubeAPIServer));
 		return createSuccessResult(kubeAPIServer);
+	}
+
+	@GetMapping("/getIp/{inIp}")
+	public String getIp(@PathVariable String inIp){
+		String com = "curl ifconfig.me";
+		Connection connection = RemoteCommandUtil.login(inIp, "root", "tsf12345678+");
+		String ip = RemoteCommandUtil.execute(connection, com);
+		return ip;
 	}
 
 }

@@ -5,6 +5,7 @@
 
 package com.tencent.tsf.container.impl;
 
+import ch.ethz.ssh2.Connection;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -15,6 +16,7 @@ import com.tencent.tsf.container.models.*;
 import com.tencent.tsf.container.service.ClusterManagerService;
 import com.tencent.tsf.container.utils.ExecResult;
 import com.tencent.tsf.container.utils.HttpClientUtil;
+import com.tencent.tsf.container.utils.RemoteCommandUtil;
 import com.tencent.tsf.container.utils.SSHHelper;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
@@ -31,6 +33,8 @@ import org.springframework.util.CollectionUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -53,8 +57,13 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 	@Autowired
 	private RancherKubernetesConfig rancherKubernetesConfig;
 
+	private final static Executor executor = Executors.newCachedThreadPool();//启用多线程
+
 	private final String NODE_ROLE_MASTER = " --etcd --controlplane";
 	private final String NODE_ROLE_NODE = " --worker";
+	private final String NODE_ADDRESS = " --address";
+	private final String NODE_INTERNAL_ADDRESS = " --internal-address";
+	private final String GET_ADDRESS = "curl ifconfig.me";
 
 
 	@Override
@@ -152,6 +161,9 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 				case "active":
 					status = "Running";
 					break;
+				case "updating":
+					status = "Creating";
+					break;
 			}
 		}
 		clusterInfoDto.setCreatedAt(createdAt);
@@ -229,12 +241,27 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		String clusterId = masterNode.getClusterId();
 		String basicCommand = requestAddNodeSSH(headers, clusterId);
 		final String command = basicCommand + NODE_ROLE_MASTER;
-		log.debug("执行脚本，脚本信息 command: {}", command);
+		log.debug("添加master节点，执行脚本，脚本信息 command: {}", command);
 		masterNodes.stream().forEach(it ->{
-			ExecResult execResult = SSHHelper.execCommand(command, it);
-			log.debug("执行脚本，返回结果 ExecResult: {}", JSON.toJSONString(execResult));
+			executor.execute(new Runnable() {
+				@Override
+				public void run() {
+					String result = execCommand(command, it);
+					log.debug("添加master节点，执行脚本，master节点ip: {},返回结果 ExecResult: {}", it.getIp(), result);
+				}
+			});
 		});
 
+	}
+
+	public String execCommand(String command, ClusterVMDto sshHostInfo){
+		Connection connection = RemoteCommandUtil.login(sshHostInfo.getIp(), sshHostInfo.getUsername(), sshHostInfo.getPassword());
+		String ip = RemoteCommandUtil.execute(connection, GET_ADDRESS);
+        log.debug("执行脚本，机器ip: {},返回结果 ExecResult: {}", sshHostInfo.getIp(), ip);
+        String com = command + NODE_ADDRESS + " " + ip;
+		String result = RemoteCommandUtil.execute(connection, com);
+		connection.close();
+		return result;
 	}
 
 	private String requestAddNodeSSH(Map<String, String> headers, String clusterId) {
@@ -266,16 +293,16 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		Requested requested = clusterInfo.getRequested();
 		Limits limits = clusterInfo.getLimits();
 		if (capacity != null) {
-			usage.put("cpuTotal", capacity.getCpu());
-			usage.put("memTotal", capacity.getMemory());
+			usage.put("cpuTotal", getFloat(capacity.getCpu()));
+			usage.put("memTotal", getFloat(capacity.getMemory()));
 		}
 		if (requested != null) {
-			usage.put("cpuRequest", requested.getCpu());
-			usage.put("memRequest", requested.getMemory());
+			usage.put("cpuRequest", getFloat(requested.getCpu()));
+			usage.put("memRequest", getFloat(requested.getMemory()));
 		}
 		if (limits != null) {
-			usage.put("cpuLimit", limits.getCpu());
-			usage.put("memLimit", limits.getMemory());
+			usage.put("cpuLimit", getFloat(limits.getCpu()));
+			usage.put("memLimit", getFloat(limits.getMemory()));
 		}
 		return usage.toString();
 	}
@@ -293,37 +320,69 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		}
 		List<ClusterNodeDto> list = new ArrayList<>();
 		data.stream().forEach(it -> {
-			if (Boolean.TRUE.equals(((JSONObject) it).get("worker"))) {
-				JSONObject item = (JSONObject) it;
+			JSONObject item = (JSONObject) it;
+			String state = item.getString("state");
+			if (Boolean.TRUE.equals(item.get("worker"))) {
+
 				ClusterNodeDto info = JSON.parseObject(JSON.toJSONString(it), ClusterNodeDto.class);
 
-				Allocatable allocatable = item.getObject("allocatable", Allocatable.class);
-				Requested requested = item.getObject("requested", Requested.class);
-				Limits limits = item.getObject("limits", Limits.class);
-				if (limits == null) {
-					limits = new Limits();
-					limits.setCpu("0m");
-					limits.setMemory("0Mi");
-				}else if (!item.getJSONObject("limits").containsKey("cpu")){
-					limits.setCpu("0m");
+				if ("active".equals(state)) {
+					Allocatable allocatable = item.getObject("allocatable", Allocatable.class);
+					Requested requested = item.getObject("requested", Requested.class);
+					if (!item.getJSONObject("requested").containsKey("memory")) {
+						requested.setMemory("0");
+					}
+					Limits limits = item.getObject("limits", Limits.class);
+					if (limits == null) {
+						limits = new Limits();
+						limits.setCpu("0");
+						limits.setMemory("0");
+					}else if (!item.getJSONObject("limits").containsKey("cpu")){
+						limits.setCpu("0");
+					}
+
+					Float cpuLimit = getFloat(limits.getCpu());
+					Float cpuRequest = getFloat(requested.getCpu());
+					Float cpuTotal = getFloat(allocatable.getCpu());
+					Float memLimit = getFloat(limits.getMemory());
+					Float memRequest = getFloat(requested.getMemory());
+					Float memTotal = getFloat(allocatable.getMemory());
+
+					info.setCpuLimit(cpuLimit);
+					info.setCpuRequest(cpuRequest);
+					info.setCpuTotal(cpuTotal);
+					info.setMemLimit(memLimit);
+					info.setMemRequest(memRequest);
+					info.setMemTotal(memTotal);
+				} else {
+					info.setCpuLimit(0f);
+					info.setCpuRequest(0f);
+					info.setCpuTotal(0f);
+					info.setMemLimit(0f);
+					info.setMemRequest(0f);
+					info.setMemTotal(0f);
 				}
 
-				Float cpuLimit = getFloat(limits.getCpu(), 1)/1000;
-				Float cpuRequest = getFloat(requested.getCpu(), 1)/1000;
-				Float cpuTotal = getFloat(allocatable.getCpu(), 0);
-				Float memLimit = getFloat(limits.getMemory(), 2)/1024;
-				Float memRequest = getFloat(requested.getMemory(), 2)/1024;
-				Float memTotal = getFloat(allocatable.getMemory(), 2)/1024/1024;
 
-				info.setCpuLimit(cpuLimit);
-				info.setCpuRequest(cpuRequest);
-				info.setCpuTotal(cpuTotal);
-				info.setMemLimit(memLimit);
-				info.setMemRequest(memRequest);
-				info.setMemTotal(memTotal);
+
+				String status = "";
+				if (StringUtils.isNotBlank(state)) {
+					switch (state) {
+						case "active":
+							status = "Running";
+							break;
+						case "updating":
+							status = "Creating";
+							break;
+						case "registering":
+							status = "Creating";
+							break;
+					}
+				}
+
 				info.setWanIp(item.getString("externalIpAddress"));
 				info.setLanIp(item.getString("ipAddress"));
-				info.setStatus(item.getString("state"));
+				info.setStatus(status);
 				info.setCreatedAt(item.getString("created"));
 				info.setUpdatedAt(null);
 				list.add(info);
@@ -333,9 +392,25 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		return list;
 	}
 
-	public Float getFloat(String str, Integer endNum){
-		String number = str.substring(0, str.length()-endNum);
-		return Float.parseFloat(number);
+	public Float getFloat(String str){
+		String number = str.replaceAll("[a-zA-Z]","" );
+		String letter = str.replaceAll("[^a-zA-Z]","" );
+		Float num = Float.parseFloat(number);
+		switch (letter){
+			case "Mi":
+				num /= 1024;
+				break;
+			case "Ki":
+				num /= (1024*1024);
+				break;
+			case "m":
+				num /= 1000;
+				break;
+			default:
+				break;
+
+		}
+		return num;
 	}
 
 	@Override
@@ -345,9 +420,16 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		String clusterId = node.getClusterId();
 		String basicCommand = requestAddNodeSSH(headers, clusterId);
 		final String command = basicCommand + NODE_ROLE_NODE;
-		nodes.stream().forEach(it ->
-				SSHHelper.execCommand(command, it)
-		);
+		log.debug("添加node节点，执行脚本，脚本信息 command: {}", command);
+		nodes.stream().forEach(it ->{
+			executor.execute(new Runnable() {
+				 @Override
+				 public void run() {
+					 String result = execCommand(command, it);
+					 log.debug("添加node节点，ip: {},执行脚本，返回结果 ExecResult: {}", it.getIp(), result);
+				 }
+			});
+		});
 	}
 
 	@Override

@@ -39,15 +39,5 @@ public class RancherServerAPI {
 	public static String RANCHER_DELETE_NODE            = "/nodes/%1$s";
 
 	public static String RANCHER_KUBE_CONFIG            = "/clusters/%1$s?action=generateKubeconfig";
-//	/** 获取所有project **/
-//	public static String RANCHER_GET_ALL_PROJECTS       = "/projects";
-//	/** 创建镜像仓库 **/
-//	public static String RANCHER_CREATE_REPOSITORIES    = "/project/%1$s/dockerCredentials";
-//	/** 获取镜像仓库信息 **/
-//	public static String RANCHER_GET_REPOSITORY         = "/project/%1$s/dockerCredentials/%2$s";
-//	/** 删除镜像仓库 **/
-//	public static String RANCHER_DELETE_REPOSITORY      = "/project/%1$s/dockerCredentials/%2$s";
-//	/** 获取镜像仓库列表 **/
-//	public static String RANCHER_GET_ALL_REPOSITORIES   = "/project/%1$s/dockerCredentials";
 
 }
