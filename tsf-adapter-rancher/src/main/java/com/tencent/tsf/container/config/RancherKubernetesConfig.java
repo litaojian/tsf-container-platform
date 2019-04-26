@@ -32,7 +32,7 @@ public class RancherKubernetesConfig {
 	private Boolean         ignoreDockerVersion     = true;
 	private Boolean         sshAgentAuth            = false;
 	private String          type                    = "rancherKubernetesEngineConfig";
-	private String          kubernetesVersion       = "v1.13.5-rancher1-1";
+	private String          kubernetesVersion       = "v1.13.4-rancher1-2";
 	private Authentication	authentication          = new Authentication();
 	private Network         network                 = new Network();
 	private Ingress         ingress                 = new Ingress();
@@ -51,7 +51,7 @@ public class RancherKubernetesConfig {
 		private String creation = "12h";
 		private Map<String, String> extraArgs;
 		private String retention = "72h";
-		private Boolean snapshot = true;
+		private Boolean snapshot = false;//v2.1.8是true
 		private String type = "etcdService";
 
 		{
@@ -72,6 +72,7 @@ public class RancherKubernetesConfig {
 		private Boolean podSecurityPolicy = false;
 		private String serviceNodePortRange = "30000-32767";
 		private String type = "kubeAPIService";
+		private Boolean alwaysPullImages = false;//v2.2.0
 	}
 	@Data
 	public class Services{

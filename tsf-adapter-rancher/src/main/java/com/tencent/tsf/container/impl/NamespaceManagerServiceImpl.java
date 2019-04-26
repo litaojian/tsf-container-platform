@@ -1,5 +1,9 @@
 package com.tencent.tsf.container.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.tencent.tsf.container.config.RancherServerAPI;
 import com.tencent.tsf.container.config.RancherServerPath;
 import com.tencent.tsf.container.service.NamespaceManagerService;
 import com.tencent.tsf.container.utils.HttpClientUtil;
@@ -19,12 +23,10 @@ public class NamespaceManagerServiceImpl implements NamespaceManagerService {
     RancherServerPath rancherServerPath;
 
     @Override
-    public String createNamespace(Map<String, String> headers, String clusterId, String name) {
+    public String createNamespace(Map<String, String> headers, String clusterId, Map<String, Object> params) {
         Assert.hasLength(clusterId, "集群ID不能为空！");
 
         String url = rancherServerPath.createNamespaceUrl(clusterId);
-        Map<String, Object> params = new HashMap<>();
-        params.put("name", name);
         String result = HttpClientUtil.doPost(url, headers, params);
         return result;
     }
@@ -56,6 +58,23 @@ public class NamespaceManagerServiceImpl implements NamespaceManagerService {
         String url = rancherServerPath.deleteNamespaceUrl(clusterId, namespaceId);
         String result = HttpClientUtil.doDelete(url, headers);
         return result;
+    }
+
+    @Override
+    public String getclusterProject(Map<String, String> headers, String clusterId) {
+        Assert.hasLength(clusterId, "集群ID不能为空！");
+
+        String url = rancherServerPath.getClusterProjectsUrl(clusterId);
+        String result = HttpClientUtil.doGet(url, headers);
+        JSONArray jsonArray = JSON.parseObject(result).getJSONArray("data");
+        JSONObject project = null;
+        for (Object o : jsonArray) {
+            JSONObject item = (JSONObject) o;
+            if ("Default".equals(item.getString("name"))) {
+                project = item;
+            }
+        }
+        return JSON.toJSONString(project);
     }
 
 }

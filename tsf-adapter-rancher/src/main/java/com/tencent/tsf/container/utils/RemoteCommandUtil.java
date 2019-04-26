@@ -29,11 +29,11 @@ public class RemoteCommandUtil {
             conn.connect();//连接
             flg=conn.authenticateWithPassword(userName, userPwd);//认证
             if(flg){
-                log.info("=========登录成功========="+conn);
+                log.info("=========SSH Success========="+conn);
                 return conn;
             }
         } catch (IOException e) {
-            log.error("=========登录失败========="+e.getMessage());
+            log.error("=========SSH Failed========="+e.getMessage());
             e.printStackTrace();
         }
         return conn;

@@ -14,7 +14,6 @@ import com.tencent.tsf.container.config.RancherServerPath;
 import com.tencent.tsf.container.dto.*;
 import com.tencent.tsf.container.models.*;
 import com.tencent.tsf.container.service.ClusterManagerService;
-import com.tencent.tsf.container.utils.ExecResult;
 import com.tencent.tsf.container.utils.HttpClientUtil;
 import com.tencent.tsf.container.utils.RemoteCommandUtil;
 import com.tencent.tsf.container.utils.SSHHelper;
@@ -88,6 +87,14 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		param.put("enableNetworkPolicy", false);
 		param.put("type", "cluster");
 		param.put("rancherKubernetesEngineConfig", config);
+
+		//v2.2.0
+		param.put("enableClusterAlerting", false);
+		param.put("enableClusterMonitoring", false);
+		Map<String, Object> localClusterAuthEndpoint = new HashMap<>();
+		localClusterAuthEndpoint.put("enabled", true);
+		localClusterAuthEndpoint.put("type", "localClusterAuthEndpoint");
+		param.put("localClusterAuthEndpoint", localClusterAuthEndpoint);
 		return JSON.toJSONString(param);
 	}
 
@@ -291,6 +298,10 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		JSONObject usage = new JSONObject();
 		Capacity capacity = clusterInfo.getCapacity();
 		Requested requested = clusterInfo.getRequested();
+		String letter = requested.getMemory().replaceAll("[^a-zA-Z]","" );
+		if (letter == null || "".equals(letter)) {
+			requested.setMemory(requested.getMemory() + "Bi");
+		}
 		Limits limits = clusterInfo.getLimits();
 		if (capacity != null) {
 			usage.put("cpuTotal", getFloat(capacity.getCpu()));
@@ -331,6 +342,11 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 					Requested requested = item.getObject("requested", Requested.class);
 					if (!item.getJSONObject("requested").containsKey("memory")) {
 						requested.setMemory("0");
+					} else {
+						String letter = requested.getMemory().replaceAll("[^a-zA-Z]","" );
+						if (letter == null || "".equals(letter)) {
+							requested.setMemory(requested.getMemory() + "Bi");
+						}
 					}
 					Limits limits = item.getObject("limits", Limits.class);
 					if (limits == null) {
@@ -403,6 +419,9 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 			case "Ki":
 				num /= (1024*1024);
 				break;
+			case "Bi":
+				num /= (1024*1024*1024);
+				break;
 			case "m":
 				num /= 1000;
 				break;
@@ -420,7 +439,7 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		String clusterId = node.getClusterId();
 		String basicCommand = requestAddNodeSSH(headers, clusterId);
 		final String command = basicCommand + NODE_ROLE_NODE;
-		log.debug("添加node节点，执行脚本，脚本信息 command: {}", command);
+//		log.debug("添加node节点，执行脚本，脚本信息 command: {}", command);
 		nodes.stream().forEach(it ->{
 			executor.execute(new Runnable() {
 				 @Override
@@ -462,12 +481,12 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 
 		KubeAPIServerDto kubeAPIServer = kubeConfigToBasicAuthentication(headers, clusterId);
 
-		String url = rancherServerPath.clusterInfoUrl(clusterId);
-		String response = HttpClientUtil.doGet(url, headers);
+//		String url = rancherServerPath.clusterInfoUrl(clusterId);
+//		String response = HttpClientUtil.doGet(url, headers);
 
-		JSONObject data = JSON.parseObject(response);
-		String address = data.getString("apiEndpoint");
-		kubeAPIServer.setAddress(address);
+//		JSONObject data = JSON.parseObject(response);
+//		String address = data.getString("apiEndpoint");
+//		kubeAPIServer.setAddress(address);
 		return kubeAPIServer;
 	}
 
@@ -476,12 +495,23 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		String response = HttpClientUtil.doPost(kubeConfigUrl, headers);
 		JSONObject result = JSON.parseObject(response);
 		String config = result.getString("config");
+		log.info("获取apiServer，config: {}", config);
 		Yaml yaml = new Yaml();
 		LinkedHashMap<String, Object> configData = yaml.loadAs(config, LinkedHashMap.class);
 		if(CollectionUtils.isEmpty(configData)) {
 			log.error("获取kubeConfig信息失败, 集群ID：{}", clusterId);
 			throw new RuntimeException("获取 kubeConfig信息失败！");
 		}
+		ArrayList<LinkedHashMap<String, Object>> clusters = (ArrayList<LinkedHashMap<String, Object>>) configData.get("clusters");
+		if(CollectionUtils.isEmpty(clusters)) {
+			log.error("获取kubeConfig clusters信息失败, 集群ID：{}", clusterId);
+			throw new RuntimeException("获取kubeConfig信息失败！");
+		}
+		LinkedHashMap clusterInfo = clusters.get(0);
+		LinkedHashMap<String, Object> cluster = (LinkedHashMap<String, Object>) clusterInfo.get("cluster");
+		String address = String.valueOf(cluster.get("server"));
+
+
 		ArrayList<LinkedHashMap<String, Object>> users = (ArrayList<LinkedHashMap<String, Object>>) configData.get("users");
 		if(CollectionUtils.isEmpty(users)) {
 			log.error("获取kubeConfig user信息失败, 集群ID：{}", clusterId);
@@ -492,11 +522,11 @@ public class ClusterManagerServiceImpl implements ClusterManagerService {
 		LinkedHashMap<String, Object> user = (LinkedHashMap<String, Object>) userInfo.get("user");
 		String token = String.valueOf(user.get("token"));
 		String[] tokens = token.split(":");
-		String basic = Base64Utils.encodeToString(String.format("%1$s:%2$s", name, tokens[1]).getBytes());
+		String basic = Base64Utils.encodeToString(String.format("%1$s:%2$s", tokens[0], tokens[1]).getBytes());
 //		String basic = Base64Utils.encodeToString(String.format(token).getBytes());
 
 		KubeAPIServerDto kubeAPIServer = new KubeAPIServerDto();
-		kubeAPIServer.setAddress("");
+		kubeAPIServer.setAddress(address);
 		KubeAPIServerDto.Authorization authorization = kubeAPIServer.new Authorization(basic);
 		kubeAPIServer.setAuthorization(authorization);
 		return kubeAPIServer;

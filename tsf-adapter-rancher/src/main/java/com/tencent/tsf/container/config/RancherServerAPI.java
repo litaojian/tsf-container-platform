@@ -37,7 +37,9 @@ public class RancherServerAPI {
 	public static String RANCHER_DELETE_NAMESPACE       = "/cluster/%1$s/namespaces/%2$s";
 	/** 删除节点 **/
 	public static String RANCHER_DELETE_NODE            = "/nodes/%1$s";
-
+	/** 获取 k8s API Server **/
 	public static String RANCHER_KUBE_CONFIG            = "/clusters/%1$s?action=generateKubeconfig";
+	/** 获取集群projects **/
+	public static String RANCHER_CLUSTER_PROJECTS       = "/clusters/%1$s/projects";
 
 }

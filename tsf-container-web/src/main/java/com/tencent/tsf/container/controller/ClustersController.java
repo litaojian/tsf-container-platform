@@ -182,7 +182,7 @@ public class ClustersController extends BaseController {
 	public BaseResponse addNodes(HttpServletRequest request,
 	                             @PathVariable("clusterId") String clusterId,
 	                             @RequestBody Map<String, List<ClusterVMDto>> params) {
-		log.info("添加node节点, 集群ID: {}, host: {}", clusterId, JSON.toJSONString(params));
+//		log.info("添加node节点, 集群ID: {}, host: {}", clusterId, JSON.toJSONString(params));
 
 		Map<String, String> headers = getCustomHeaders(request);
 		List<ClusterVMDto> nodes = params.get("instances");
@@ -194,8 +194,8 @@ public class ClustersController extends BaseController {
 		return createSuccessResult("{}");
 	}
 
-	@DeleteMapping("/{clusterId}:removeNodes")
-	@ApiOperation(value = "将 node 节点从 Kubernetes 集群中移除", httpMethod = "DELETE",
+	@PostMapping("/{clusterId}:removeNodes")
+	@ApiOperation(value = "将 node 节点从 Kubernetes 集群中移除", httpMethod = "POST",
 			notes = "将 node 节点从 Kubernetes 集群中移除<br>" +
 					"请求参数描述：" +
 					"<ul>" +

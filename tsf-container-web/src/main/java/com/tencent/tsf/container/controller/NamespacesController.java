@@ -37,9 +37,12 @@ public class NamespacesController extends BaseController {
                     "返回参数描述：<br/>", response = BaseResponse.class)
     public BaseResponse createNamespace(@PathVariable("clusterId") String clusterId, @RequestBody Map<String, Object> requestMap, HttpServletRequest request){
         Map<String, String> headers = getCustomHeaders(request);
-        String name = requestMap.get("name").toString();
 
-        String data = namespaceManagerService.createNamespace(headers, clusterId, name);
+        String project = namespaceManagerService.getclusterProject(headers, clusterId);
+        String projectId = JSON.parseObject(project).getString("id");
+        requestMap.put("projectId", projectId);
+
+        String data = namespaceManagerService.createNamespace(headers, clusterId, requestMap);
         JSONObject jsonObject = JSON.parseObject(data);
         log.debug("---- createNamespace gotten, data: {}", jsonObject);
         if (jsonObject.containsKey("status")){
